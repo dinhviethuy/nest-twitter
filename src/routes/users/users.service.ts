@@ -72,9 +72,12 @@ export class UsersService {
     }
   }
 
-  async refreshToken(data: RefreshTokenBodyType) {
+  async refreshToken({ data, userIdRequest }: { data: RefreshTokenBodyType; userIdRequest: number }) {
     try {
       const { token_type, userId } = await this.tokenService.verifyRefreshToken(data.refreshToken)
+      if (userId !== userIdRequest) {
+        throw new UnauthorizedException('Refresh token không hợp lệ')
+      }
       if (token_type !== TokenType.RefreshToken) {
         throw new UnauthorizedException('Refresh token không hợp lệ')
       }

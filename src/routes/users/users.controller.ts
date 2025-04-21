@@ -4,6 +4,7 @@ import { ZodSerializerDto } from 'nestjs-zod'
 import { UserResponseDTO, RegisterBodyDTO, LoginBodyDTO, RefreshTokenBodyDTO } from './users.dto'
 import { MessageResponse } from '@/shared/decorators/message.decorator'
 import { IsPublic } from '@/shared/decorators/auth.decorator'
+import { ActiveUser } from '@/shared/decorators/active-user.decorator'
 
 @Controller('users')
 export class UsersController {
@@ -28,7 +29,10 @@ export class UsersController {
   @Post('refresh-token')
   @ZodSerializerDto(UserResponseDTO)
   @MessageResponse('Làm mới token thành công')
-  refreshToken(@Body() body: RefreshTokenBodyDTO) {
-    return this.usersService.refreshToken(body)
+  refreshToken(@Body() body: RefreshTokenBodyDTO, @ActiveUser('userId') userId: number) {
+    return this.usersService.refreshToken({
+      data: body,
+      userIdRequest: userId,
+    })
   }
 }
