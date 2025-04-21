@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(255)
+  email String @unique @db.VarChar(255)
+  dateOfBirth DateTime @db.Date
+  password String
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+  emailVerifyToken String @default("")
+  forgotPasswordToken String @default("")
+  verify UserVerifyStatus @default(UNVERIFIED)
+  bio String @db.VarChar(100) @default("")
+  location String @default("")
+  website String @default("")
+  username String @unique @default(dbgenerated("gen_random_uuid()"))
+  avatar String @default("")
+  coverPhoto String @default("")
+
+  refreshTokens RefreshToken[] 
+  followers Follower[] @relation("UserFollower")
+  following Follower[] @relation("FollowerUser")
+  bookmarks BookMark[]
+  likes Like[]
+  tweets Tweet[]
+
+  @@index(email)
+  @@index(id)
+  @@index(username)
+}
+
+model RefreshToken {
+  id Int @id @default(autoincrement())
+  userId Int
+  token String 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id])
+
+  @@index(userId)
+  @@index(token)
+  @@index(id)
+  @@unique([userId, token])
+  @@index([userId, token])
+}
+
+model Follower {
+  id Int @id @default(autoincrement())
+  userId Int
+  followerId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation("UserFollower", fields: [userId], references: [id])
+  follower User @relation("FollowerUser", fields: [followerId], references: [id])
+
+  @@index(userId)
+  @@index(followerId)
+  @@unique([userId, followerId])
+  @@index([userId, followerId])
+}
+
+model BookMark {
+  id Int @id @default(autoincrement())
+  userId Int
+  tweetId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [tweetId], references: [id])
+  tweet Tweet @relation(fields: [userId], references: [id])
+
+  @@unique([userId, tweetId])
+  @@index([userId, tweetId])
+  @@index(id)
+}
+
+model Like {
+  id Int @id @default(autoincrement())
+  userId Int
+  tweetId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id])
+  tweet Tweet @relation(fields: [tweetId], references: [id])
+  @@unique([userId, tweetId])
+  @@index([userId, tweetId])
+  @@index(id)
+}
+
+model Tweet {
+  id Int @id @default(autoincrement())
+  userId Int
+  aduience TweetAudience @default(EVERYONE)
+  parentId Int?
+  type TweetType @default(TWEET)
+  guest_view Int @default(0)
+  user_view Int @default(0)
+  content String @db.VarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id])
+  likes Like[]
+  bookmarks BookMark[]
+  hashtags Hashtag[] 
+
+  @@index(id)
+  @@index(userId)
+  @@index(parentId)
+  @@index(aduience)
+  @@index(type)
+}
+
+model Hashtag {
+  id Int @id @default(autoincrement())
+  name String @unique @db.VarChar(255)
+  tweets Tweet[]
+  createdAt DateTime @default(now())
+
+  @@index(name)
+  @@index(id)
+}
+
+model Media {
+  id Int @id @default(autoincrement())
+  url String @db.VarChar(255)
+  type MediaType @default(IMAGE)
+
+  @@index(id)
+  @@index(type)
+}
+
+
+enum UserVerifyStatus {
+  UNVERIFIED  
+  VERIFIED
+  BANNED
+}
+
+enum TweetAudience {
+  EVERYONE
+  TWITTER_CIRCLE
+}
+
+enum TweetType {
+  TWEET
+  RETWEET
+  COMMENT
+  QUOTE_TWEET
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
