@@ -14,8 +14,8 @@ model User {
   email String @unique @db.VarChar(255)
   dateOfBirth DateTime @db.Date
   password String
-  createAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   emailVerifyToken String @default("")
   forgotPasswordToken String @default("")
   verify UserVerifyStatus @default(UNVERIFIED)
