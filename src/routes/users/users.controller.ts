@@ -1,7 +1,14 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common'
 import { UsersService } from './users.service'
 import { ZodSerializerDto } from 'nestjs-zod'
-import { UserResponseDTO, RegisterBodyDTO, LoginBodyDTO, RefreshTokenBodyDTO, EmailVerifyTokenDTO } from './users.dto'
+import {
+  UserResponseDTO,
+  RegisterBodyDTO,
+  LoginBodyDTO,
+  RefreshTokenBodyDTO,
+  EmailVerifyTokenDTO,
+  GetUserResponseDTO,
+} from './users.dto'
 import { MessageResponse } from '@/shared/decorators/message.decorator'
 import { IsPublic } from '@/shared/decorators/auth.decorator'
 import { ActiveUser } from '@/shared/decorators/active-user.decorator'
@@ -72,5 +79,12 @@ export class UsersController {
       }
     }
     return result
+  }
+
+  @Get('me')
+  @ZodSerializerDto(GetUserResponseDTO)
+  @MessageResponse('Lấy thông tin người dùng thành công')
+  getMe(@ActiveUser('userId') userId: number) {
+    return this.usersService.getMe(userId)
   }
 }

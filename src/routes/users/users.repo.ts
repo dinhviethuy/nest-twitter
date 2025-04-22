@@ -78,7 +78,7 @@ export class UsersRepo {
     })
   }
 
-  async findUniqueRefreshTokenIncludeUserRole(uniqueObject: { token: string }) {
+  async findUniqueRefreshToken(uniqueObject: { token: string }) {
     return this.prismaService.refreshToken.findUnique({
       where: uniqueObject,
     })

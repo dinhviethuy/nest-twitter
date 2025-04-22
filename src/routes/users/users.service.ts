@@ -24,6 +24,22 @@ export class UsersService {
     private readonly tokenService: TokenService,
   ) {}
 
+  private checkUserVerify(verify: UserVerifyStatusType) {
+    if (verify === UserVerifyStatus.Unverified) {
+      throw new UnauthorizedException('Email chưa được xác thực')
+    }
+    return true
+  }
+
+  async getMe(userId: number) {
+    const user = await this.sharedUserRepo.findUnique({ id: userId })
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại')
+    }
+    this.checkUserVerify(user.verify)
+    return user
+  }
+
   async login(data: LoginBodyType) {
     const user = await this.sharedUserRepo.findUnique({
       email: data.email,
@@ -84,7 +100,7 @@ export class UsersService {
       if (token_type !== TokenType.RefreshToken) {
         throw new UnauthorizedException('Refresh token không hợp lệ')
       }
-      const refreshTokenInDb = await this.usersRepo.findUniqueRefreshTokenIncludeUserRole({ token: data.refreshToken })
+      const refreshTokenInDb = await this.usersRepo.findUniqueRefreshToken({ token: data.refreshToken })
       if (!refreshTokenInDb) {
         throw new UnauthorizedException('Refresh token không tồn tại')
       }
@@ -111,7 +127,7 @@ export class UsersService {
       if (token_type !== TokenType.RefreshToken) {
         throw new UnauthorizedException('Refresh token không hợp lệ')
       }
-      const refreshTokenInDb = await this.usersRepo.findUniqueRefreshTokenIncludeUserRole({ token: data.refreshToken })
+      const refreshTokenInDb = await this.usersRepo.findUniqueRefreshToken({ token: data.refreshToken })
       if (!refreshTokenInDb) {
         throw new UnauthorizedException('Refresh token không tồn tại')
       }
