@@ -14,20 +14,27 @@ import {
   RegisterBodyType,
   ResetPasswordBodyType,
   UpdateMeProfileBodyType,
+  UserFollwerBodyType,
   VerifyForgotPasswordTokenBodyType,
 } from './users.model'
-import { isUniqueConstraintPrismaError } from '@/shared/utils/utils'
+import {
+  isForeignKeyConstraintPrismaError,
+  isNotFoundPrismaError,
+  isUniqueConstraintPrismaError,
+} from '@/shared/utils/utils'
 import { SharedUserRepo } from '../../shared/repositories/shared-user.repo'
 import { HashingService } from '../../shared/services/hashing.service'
 import { TokenService } from '@/shared/services/token.service'
 import { TokenType } from '@/shared/constants/token.constants'
 import { UserVerifyStatus, UserVerifyStatusType } from '@/shared/constants/users.contants'
+import { SharedFollwerRepo } from '@/shared/repositories/shared-follwer.repo'
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepo: UsersRepo,
     private readonly sharedUserRepo: SharedUserRepo,
+    private readonly sharedFollwerRepo: SharedFollwerRepo,
     private readonly hashingService: HashingService,
     private readonly tokenService: TokenService,
   ) {}
@@ -270,5 +277,54 @@ export class UsersService {
       throw new NotFoundException('Người dùng không tồn tại')
     }
     return user
+  }
+
+  async follow({ userId, data, verify }: { userId: number; data: UserFollwerBodyType; verify: UserVerifyStatusType }) {
+    try {
+      this.checkUserVerify(verify)
+      if (userId === data.followedUserId) {
+        throw new UnprocessableEntityException('Không thể theo dõi chính mình')
+      }
+      const result = await this.sharedFollwerRepo.createFollower({
+        userId,
+        followedUserId: data.followedUserId,
+      })
+      return result
+    } catch (error) {
+      if (isUniqueConstraintPrismaError(error)) {
+        throw new ConflictException('Người dùng đã được theo dõi')
+      }
+      if (isForeignKeyConstraintPrismaError(error)) {
+        throw new NotFoundException('Người dùng mà bạn đang theo dõi không tồn tại')
+      }
+      throw error
+    }
+  }
+
+  async unfollow({
+    userId,
+    data,
+    verify,
+  }: {
+    userId: number
+    data: UserFollwerBodyType
+    verify: UserVerifyStatusType
+  }) {
+    try {
+      this.checkUserVerify(verify)
+      if (userId === data.followedUserId) {
+        throw new UnprocessableEntityException('Không thể bỏ theo dõi chính mình')
+      }
+      await this.sharedFollwerRepo.deleteFollower({
+        userId,
+        followedUserId: data.followedUserId,
+      })
+      return true
+    } catch (error) {
+      if (isNotFoundPrismaError(error)) {
+        throw new NotFoundException('Người dùng mà bạn đang bỏ theo dõi không tồn tại')
+      }
+      throw error
+    }
   }
 }

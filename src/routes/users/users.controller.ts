@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common'
 import { UsersService } from './users.service'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
@@ -14,12 +14,15 @@ import {
   UpdateMeProfileBodyDTO,
   GetUserParamResponseDTO,
   GetUserParamsDTO,
+  UserFollwerBodyDTO,
+  UserUnfollowParamsDTO,
 } from './users.dto'
 import { MessageResponse } from '@/shared/decorators/message.decorator'
 import { IsPublic } from '@/shared/decorators/auth.decorator'
 import { ActiveUser } from '@/shared/decorators/active-user.decorator'
 import { EmptyBodyDTO } from '@/shared/dtos/request.dto'
 import { UserVerifyStatus } from '@prisma/client'
+import { AccessTokenPayload } from '@/shared/types/jwt.types'
 
 @Controller('users')
 export class UsersController {
@@ -134,5 +137,25 @@ export class UsersController {
   @MessageResponse('Lấy thông tin người dùng thành công')
   getProfile(@Param() param: GetUserParamsDTO) {
     return this.usersService.getProfile(param)
+  }
+
+  @Post('follow')
+  @MessageResponse('Theo dõi người dùng thành công')
+  followUser(@Body() body: UserFollwerBodyDTO, @ActiveUser() user: AccessTokenPayload) {
+    return this.usersService.follow({
+      data: body,
+      userId: user.userId,
+      verify: user.verify,
+    })
+  }
+
+  @Delete('follow/:followedUserId')
+  @MessageResponse('Bỏ theo dõi người dùng thành công')
+  unfollowUser(@Param() param: UserUnfollowParamsDTO, @ActiveUser() user: AccessTokenPayload) {
+    return this.usersService.unfollow({
+      data: param,
+      userId: user.userId,
+      verify: user.verify,
+    })
   }
 }

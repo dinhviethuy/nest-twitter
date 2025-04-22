@@ -27,8 +27,8 @@ model User {
   coverPhoto String @default("")
 
   refreshTokens RefreshToken[] 
-  followers Follower[] @relation("UserFollower")
-  following Follower[] @relation("FollowerUser")
+  followers Follower[] @relation("FollowerUser")
+  following Follower[] @relation("UserFollower")
   bookmarks BookMark[]
   likes Like[]
   tweets Tweet[]
@@ -60,16 +60,15 @@ model RefreshToken {
 model Follower {
   id Int @id @default(autoincrement())
   userId Int
-  followerId Int
+  followedUserId Int
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
   user User @relation("UserFollower", fields: [userId], references: [id])
-  follower User @relation("FollowerUser", fields: [followerId], references: [id])
+  follower User @relation("FollowerUser", fields: [followedUserId], references: [id])
 
   @@index(userId)
-  @@index(followerId)
-  @@unique([userId, followerId])
-  @@index([userId, followerId])
+  @@index(followedUserId)
+  @@unique([userId, followedUserId])
+  @@index([userId, followedUserId])
 }
 
 model BookMark {

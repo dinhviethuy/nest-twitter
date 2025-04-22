@@ -106,6 +106,14 @@ export const GetUserParamResponseSchema = UserSchema.omit({
   dateOfBirth: z.date().transform((value: Date) => value.toISOString()),
 })
 
+export const UserFollwerBodySchema = z
+  .object({
+    followedUserId: z.coerce.number().int().positive(),
+  })
+  .strict()
+
+export const UserUnfollowParamsSchema = UserFollwerBodySchema
+
 export type UserResponseType = z.infer<typeof UserResponseSchema>
 export type RegisterBodyType = z.infer<typeof RegisterBodySchema>
 export type LoginBodyType = z.infer<typeof LoginBodySchema>
@@ -118,3 +126,5 @@ export type ResetPasswordBodyType = z.infer<typeof ResetPasswordBodySchema>
 export type UpdateMeProfileBodyType = z.infer<typeof UpdateMeProfileBodySchema>
 export type GetUserParamsType = z.infer<typeof GetUserParamsSchema>
 export type GetUserParamResponseType = z.infer<typeof GetUserParamResponseSchema>
+export type UserFollwerBodyType = z.infer<typeof UserFollwerBodySchema>
+export type UserUnfollowParamsType = z.infer<typeof UserUnfollowParamsSchema>
