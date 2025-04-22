@@ -122,6 +122,23 @@ export const UserFollwerBodySchema = z
 
 export const UserUnfollowParamsSchema = UserFollwerBodySchema
 
+export const ChangePasswordBodySchema = z
+  .object({
+    oldPassword: z.string().min(6),
+    newPassword: z.string().min(6),
+    confirmNewPassword: z.string().min(6),
+  })
+  .strict()
+  .superRefine(({ newPassword, confirmNewPassword }, ctx) => {
+    if (newPassword !== confirmNewPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Passwords do not match',
+        path: ['confirmNewPassword'],
+      })
+    }
+  })
+
 export type UserResponseType = z.infer<typeof UserResponseSchema>
 export type RegisterBodyType = z.infer<typeof RegisterBodySchema>
 export type LoginBodyType = z.infer<typeof LoginBodySchema>
@@ -136,3 +153,4 @@ export type GetUserParamsType = z.infer<typeof GetUserParamsSchema>
 export type GetUserParamResponseType = z.infer<typeof GetUserParamResponseSchema>
 export type UserFollwerBodyType = z.infer<typeof UserFollwerBodySchema>
 export type UserUnfollowParamsType = z.infer<typeof UserUnfollowParamsSchema>
+export type ChangePasswordBodyType = z.infer<typeof ChangePasswordBodySchema>

@@ -2,7 +2,13 @@ import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../shared/services/prisma.service'
 import { TokenService } from '../../shared/services/token.service'
 import { HashingService } from '../../shared/services/hashing.service'
-import { RegisterBodyType, ResetPasswordBodyType, UpdateMeProfileBodyType, UserResponseType } from './users.model'
+import {
+  ChangePasswordBodyType,
+  RegisterBodyType,
+  ResetPasswordBodyType,
+  UpdateMeProfileBodyType,
+  UserResponseType,
+} from './users.model'
 import { TokenType } from '@/shared/constants/token.constants'
 import { UserVerifyStatus, UserVerifyStatusType } from '@/shared/constants/users.contants'
 
@@ -159,6 +165,17 @@ export class UsersRepo {
     return this.prismaService.user.update({
       where: { id: userId },
       data,
+    })
+  }
+
+  async changePassword({ userId, data }: { userId: number; data: ChangePasswordBodyType }) {
+    const { newPassword } = data
+    const hashedPassword = await this.hashingService.hash(newPassword)
+    return this.prismaService.user.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
+      },
     })
   }
 }

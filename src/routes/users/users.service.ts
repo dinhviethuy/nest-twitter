@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common'
 import { UsersRepo } from './users.repo'
 import {
+  ChangePasswordBodyType,
   GetUserParamsType,
   LoginBodyType,
   RefreshTokenBodyType,
@@ -326,5 +327,22 @@ export class UsersService {
       }
       throw error
     }
+  }
+
+  async changePassword({ userId, data }: { userId; data: ChangePasswordBodyType }) {
+    const user = await this.sharedUserRepo.findUnique({ id: userId })
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại')
+    }
+    this.checkUserVerify(user.verify)
+    const isPasswordValid = await this.hashingService.compare(data.oldPassword, user.password)
+    if (!isPasswordValid) {
+      throw new UnprocessableEntityException('Mật khẩu không chính xác')
+    }
+    if (data.newPassword === data.oldPassword) {
+      throw new UnprocessableEntityException('Mật khẩu mới không được giống mật khẩu cũ')
+    }
+    await this.usersRepo.changePassword({ userId, data })
+    return true
   }
 }

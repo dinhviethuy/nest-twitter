@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common'
 import { UsersService } from './users.service'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
@@ -16,6 +16,7 @@ import {
   GetUserParamsDTO,
   UserFollwerBodyDTO,
   UserUnfollowParamsDTO,
+  ChangePasswordBodyDTO,
 } from './users.dto'
 import { MessageResponse } from '@/shared/decorators/message.decorator'
 import { IsPublic } from '@/shared/decorators/auth.decorator'
@@ -156,6 +157,15 @@ export class UsersController {
       data: param,
       userId: user.userId,
       verify: user.verify,
+    })
+  }
+
+  @Put('change-password')
+  @MessageResponse('Đổi mật khẩu thành công')
+  async changePassword(@Body() body: ChangePasswordBodyDTO, @ActiveUser('userId') userId: number) {
+    return this.usersService.changePassword({
+      data: body,
+      userId,
     })
   }
 }
