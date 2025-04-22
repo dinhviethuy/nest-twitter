@@ -35,4 +35,13 @@ export class UsersController {
       userIdRequest: userId,
     })
   }
+
+  @Post('logout')
+  @MessageResponse('Đăng xuất thành công')
+  logout(@Body() body: RefreshTokenBodyDTO, @ActiveUser('userId') userId: number) {
+    return this.usersService.logout({
+      data: body,
+      userIdRequest: userId,
+    })
+  }
 }

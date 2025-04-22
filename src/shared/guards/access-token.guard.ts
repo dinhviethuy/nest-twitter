@@ -16,7 +16,7 @@ export class AccessTokenGuard implements CanActivate {
 
   private extractAccessTokenFromHeader(request: any): string {
     const accessToken = request.headers['authorization']?.split(' ')[1]
-    if (!accessToken) {
+    if (!accessToken || accessToken.split('.').length !== 3) {
       throw new UnauthorizedException('Không tìm thấy access token trong header')
     }
     return accessToken
@@ -33,7 +33,7 @@ export class AccessTokenGuard implements CanActivate {
       request[REQUEST_USER_KEY] = decodedAccessToken
       return decodedAccessToken
     } catch (error) {
-      console.error('Error verifying access token:', error)
+      console.log('Error verifying access token:', error)
       if (error instanceof HttpException) {
         throw error
       }

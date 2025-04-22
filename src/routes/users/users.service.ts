@@ -98,4 +98,30 @@ export class UsersService {
       throw new UnauthorizedException('Refresh token không hợp lệ')
     }
   }
+
+  async logout({ data, userIdRequest }: { data: RefreshTokenBodyType; userIdRequest: number }) {
+    try {
+      const { token_type, userId } = await this.tokenService.verifyRefreshToken(data.refreshToken)
+      if (userId !== userIdRequest) {
+        throw new UnauthorizedException('Refresh token không hợp lệ')
+      }
+      if (token_type !== TokenType.RefreshToken) {
+        throw new UnauthorizedException('Refresh token không hợp lệ')
+      }
+      const refreshTokenInDb = await this.usersRepo.findUniqueRefreshTokenIncludeUserRole({ token: data.refreshToken })
+      if (!refreshTokenInDb) {
+        throw new UnauthorizedException('Refresh token không tồn tại')
+      }
+
+      const $deleteRefreshToken = this.usersRepo.deleteRefreshToken(data.refreshToken)
+
+      await Promise.all([$deleteRefreshToken])
+      return true
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error
+      }
+      throw new UnauthorizedException('Refresh token không hợp lệ')
+    }
+  }
 }

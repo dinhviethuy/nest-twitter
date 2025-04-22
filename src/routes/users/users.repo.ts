@@ -58,7 +58,7 @@ export class UsersRepo {
   }
 
   async deleteRefreshToken(token: string) {
-    await this.prismaService.refreshToken.deleteMany({
+    await this.prismaService.refreshToken.delete({
       where: {
         token,
       },
