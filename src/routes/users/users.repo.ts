@@ -4,7 +4,7 @@ import { TokenService } from '../../shared/services/token.service'
 import { HashingService } from '../../shared/services/hashing.service'
 import { RegisterBodyType, UserResponseType } from './users.model'
 import { TokenType } from '@/shared/constants/token.constants'
-import { UserVerifyStatus } from '@/shared/constants/users.contants'
+import { UserVerifyStatus, UserVerifyStatusType } from '@/shared/constants/users.contants'
 
 @Injectable()
 export class UsersRepo {
@@ -14,10 +14,10 @@ export class UsersRepo {
     private readonly hashingService: HashingService,
   ) {}
 
-  async login(userId: number): Promise<UserResponseType> {
+  async login(userId: number, verify: UserVerifyStatusType): Promise<UserResponseType> {
     const [accessToken, refreshToken] = await Promise.all([
-      this.tokenService.signAccessToken({ userId, token_type: TokenType.AccessToken }),
-      this.tokenService.signRefreshToken({ userId, token_type: TokenType.RefreshToken }),
+      this.tokenService.signAccessToken({ userId, token_type: TokenType.AccessToken, verify }),
+      this.tokenService.signRefreshToken({ userId, token_type: TokenType.RefreshToken, verify }),
     ])
     const { exp } = await this.tokenService.verifyRefreshToken(refreshToken)
     await this.createRefreshToken({
@@ -43,11 +43,12 @@ export class UsersRepo {
       },
     })
     const [accessToken, refreshToken, emailVerifyToken] = await Promise.all([
-      this.tokenService.signAccessToken({ userId: user.id, token_type: TokenType.AccessToken }),
-      this.tokenService.signRefreshToken({ userId: user.id, token_type: TokenType.RefreshToken }),
+      this.tokenService.signAccessToken({ userId: user.id, token_type: TokenType.AccessToken, verify: user.verify }),
+      this.tokenService.signRefreshToken({ userId: user.id, token_type: TokenType.RefreshToken, verify: user.verify }),
       this.tokenService.signEmailVerifyToken({
         userId: user.id,
         token_type: TokenType.EmailVerifyToken,
+        verify: UserVerifyStatus.Unverified,
       }),
     ])
     await this.prismaService.user.update({
@@ -90,19 +91,34 @@ export class UsersRepo {
   }
 
   async verifyEmail(user_id: number) {
-    return this.prismaService.user.update({
+    const user = await this.prismaService.user.update({
       where: { id: user_id },
       data: {
         emailVerifyToken: '',
         verify: UserVerifyStatus.Verified,
       },
     })
+    const [accessToken, refreshToken] = await Promise.all([
+      this.tokenService.signAccessToken({ userId: user.id, token_type: TokenType.AccessToken, verify: user.verify }),
+      this.tokenService.signRefreshToken({ userId: user.id, token_type: TokenType.RefreshToken, verify: user.verify }),
+    ])
+    const { exp } = await this.tokenService.verifyRefreshToken(refreshToken)
+    await this.createRefreshToken({
+      expiresAt: new Date(exp * 1000),
+      token: refreshToken,
+      userId: user.id,
+    })
+    return {
+      accessToken,
+      refreshToken,
+    }
   }
 
-  async resendVerifyEmail(userId: number) {
+  async resendVerifyEmail({ userId, verify }: { userId: number; verify: UserVerifyStatusType }) {
     const emailVerifyToken = this.tokenService.signEmailVerifyToken({
       userId,
       token_type: TokenType.EmailVerifyToken,
+      verify,
     })
     console.log('Resend emailVerifyToken: ', emailVerifyToken)
     return this.prismaService.user.update({

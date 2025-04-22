@@ -1,8 +1,10 @@
 import { TokenTypeType } from '../constants/token.constants'
+import { UserVerifyStatusType } from '../constants/users.contants'
 
 export interface AccessTokenPayloadCreate {
   userId: number
   token_type: TokenTypeType
+  verify: UserVerifyStatusType
 }
 
 export interface AccessTokenPayload extends AccessTokenPayloadCreate {
@@ -13,6 +15,7 @@ export interface AccessTokenPayload extends AccessTokenPayloadCreate {
 export interface RefreshTokenPayloadCreate {
   userId: number
   token_type: TokenTypeType
+  verify: UserVerifyStatusType
 }
 
 export interface RefreshTokenPayload extends RefreshTokenPayloadCreate {
@@ -23,6 +26,7 @@ export interface RefreshTokenPayload extends RefreshTokenPayloadCreate {
 export interface EmailVerifyTokenPayloadCreate {
   userId: number
   token_type: TokenTypeType
+  verify: UserVerifyStatusType
 }
 
 export interface EmailVerifyTokenPayload extends EmailVerifyTokenPayloadCreate {

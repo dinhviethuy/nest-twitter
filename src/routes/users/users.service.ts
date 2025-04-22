@@ -13,7 +13,7 @@ import { SharedUserRepo } from '../../shared/repositories/shared-user.repo'
 import { HashingService } from '../../shared/services/hashing.service'
 import { TokenService } from '@/shared/services/token.service'
 import { TokenType } from '@/shared/constants/token.constants'
-import { UserVerifyStatus } from '@/shared/constants/users.contants'
+import { UserVerifyStatus, UserVerifyStatusType } from '@/shared/constants/users.contants'
 
 @Injectable()
 export class UsersService {
@@ -35,7 +35,7 @@ export class UsersService {
     if (!isPasswordValid) {
       throw new UnprocessableEntityException('Mật khẩu không chính xác')
     }
-    return this.usersRepo.login(user.id)
+    return this.usersRepo.login(user.id, user.verify)
   }
 
   async register(data: RegisterBodyType) {
@@ -50,15 +50,17 @@ export class UsersService {
     }
   }
 
-  async generateTokens(userId: number) {
+  async generateTokens(userId: number, verify: UserVerifyStatusType) {
     const [accessToken, refreshToken] = await Promise.all([
       this.tokenService.signAccessToken({
         userId,
         token_type: TokenType.AccessToken,
+        verify,
       }),
       this.tokenService.signRefreshToken({
         userId,
         token_type: TokenType.RefreshToken,
+        verify,
       }),
     ])
     const decodedRefreshToken = await this.tokenService.verifyRefreshToken(refreshToken)
@@ -75,7 +77,7 @@ export class UsersService {
 
   async refreshToken({ data, userIdRequest }: { data: RefreshTokenBodyType; userIdRequest: number }) {
     try {
-      const { token_type, userId } = await this.tokenService.verifyRefreshToken(data.refreshToken)
+      const { token_type, userId, verify } = await this.tokenService.verifyRefreshToken(data.refreshToken)
       if (userId !== userIdRequest) {
         throw new UnauthorizedException('Refresh token không hợp lệ')
       }
@@ -87,7 +89,7 @@ export class UsersService {
         throw new UnauthorizedException('Refresh token không tồn tại')
       }
 
-      const $createRefreshToken = this.generateTokens(userId)
+      const $createRefreshToken = this.generateTokens(userId, verify)
       const $deleteRefreshToken = this.usersRepo.deleteRefreshToken(data.refreshToken)
 
       const [tokens] = await Promise.all([$createRefreshToken, $deleteRefreshToken])
@@ -140,8 +142,8 @@ export class UsersService {
       } else if (user.id !== userId || user.emailVerifyToken !== emailVerifyToken) {
         throw new UnauthorizedException('Xác thực email không hợp lệ')
       }
-      await this.usersRepo.verifyEmail(userId)
-      return true
+      const result = await this.usersRepo.verifyEmail(userId)
+      return result
     } catch (error) {
       if (error instanceof HttpException) {
         throw error
@@ -157,7 +159,10 @@ export class UsersService {
     } else if (user.emailVerifyToken === '') {
       return UserVerifyStatus.Verified
     }
-    await this.usersRepo.resendVerifyEmail(userId)
+    await this.usersRepo.resendVerifyEmail({
+      userId,
+      verify: user.verify,
+    })
     return true
   }
 }

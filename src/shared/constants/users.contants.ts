@@ -4,6 +4,8 @@ export const UserVerifyStatus = {
   Banned: 'BANNED',
 } as const
 
+export type UserVerifyStatusType = (typeof UserVerifyStatus)[keyof typeof UserVerifyStatus]
+
 export const REQUEST_USER_KEY = 'user'
 
 export const AuthType = {
