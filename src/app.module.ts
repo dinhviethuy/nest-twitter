@@ -7,9 +7,10 @@ import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import CustomZodValidationPipe from './shared/pipes/custom-zod-validation.pipe'
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter'
 import { CustomZodSerializerInterceptor } from './shared/interceptors/custom-zod-serializer.interceptor'
+import { MediasModule } from './routes/medias/medias.module'
 
 @Module({
-  imports: [SharedModule, UsersModule],
+  imports: [SharedModule, UsersModule, MediasModule],
   controllers: [AppController],
   providers: [
     AppService,

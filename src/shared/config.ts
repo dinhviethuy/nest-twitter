@@ -10,6 +10,12 @@ config({
 
 const logger = new Logger('ConfigService')
 
+if (!fs.existsSync(path.resolve('uploads'))) {
+  fs.mkdirSync(path.resolve('uploads/images'), { recursive: true })
+  fs.mkdirSync(path.resolve('uploads/videos'), { recursive: true })
+  logger.log('Uploads directory created successfully.')
+}
+
 if (!fs.existsSync(path.resolve('.env'))) {
   logger.error('No .env file found. Please create a .env file in the root directory.')
   process.exit(1)
@@ -30,6 +36,7 @@ const configSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string(),
   GOOGLE_REDIRECT_URI: z.string(),
   CLIENT_REDIRECT_URI: z.string(),
+  SERVER_URL: z.string(),
 })
 
 const configServer = configSchema.safeParse(process.env)
