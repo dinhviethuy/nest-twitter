@@ -77,6 +77,10 @@ export const ResetPasswordBodySchema = z
     }
   })
 
+export const GetAuthorizationUrlResSchema = z.object({
+  url: z.string().url(),
+})
+
 export const UpdateMeProfileBodySchema = UserSchema.pick({
   avatar: true,
   name: true,

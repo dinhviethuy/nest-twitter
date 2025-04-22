@@ -16,6 +16,7 @@ if (!fs.existsSync(path.resolve('.env'))) {
 }
 
 const configSchema = z.object({
+  PORT: z.coerce.number().default(3000),
   DATABASE_URL: z.string(),
   ACCESS_TOKEN_SECRET: z.string(),
   ACCESS_TOKEN_EXPIRES_IN: z.string(),
@@ -25,6 +26,10 @@ const configSchema = z.object({
   EMAIL_VERIFY_TOKEN_EXPIRES_IN: z.string(),
   FORGOT_PASSWORD_TOKEN_SECRET: z.string(),
   FORGOT_PASSWORD_TOKEN_EXPIRES_IN: z.string(),
+  GOOGLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_SECRET: z.string(),
+  GOOGLE_REDIRECT_URI: z.string(),
+  CLIENT_REDIRECT_URI: z.string(),
 })
 
 const configServer = configSchema.safeParse(process.env)

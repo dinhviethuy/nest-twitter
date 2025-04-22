@@ -15,6 +15,7 @@ import {
   UserFollwerBodySchema,
   UserUnfollowParamsSchema,
   ChangePasswordBodySchema,
+  GetAuthorizationUrlResSchema,
 } from './users.model'
 
 export class RegisterBodyDTO extends createZodDto(RegisterBodySchema) {}
@@ -32,3 +33,4 @@ export class GetUserParamResponseDTO extends createZodDto(GetUserParamResponseSc
 export class UserFollwerBodyDTO extends createZodDto(UserFollwerBodySchema) {}
 export class UserUnfollowParamsDTO extends createZodDto(UserUnfollowParamsSchema) {}
 export class ChangePasswordBodyDTO extends createZodDto(ChangePasswordBodySchema) {}
+export class GetAuthorizationUrlResDTO extends createZodDto(GetAuthorizationUrlResSchema) {}

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, Res } from '@nestjs/common'
 import { UsersService } from './users.service'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
@@ -24,10 +24,16 @@ import { ActiveUser } from '@/shared/decorators/active-user.decorator'
 import { EmptyBodyDTO } from '@/shared/dtos/request.dto'
 import { UserVerifyStatus } from '@prisma/client'
 import { AccessTokenPayload } from '@/shared/types/jwt.types'
+import { Response } from 'express'
+import envConfig from '@/shared/config'
+import { GoogleService } from './google.service'
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly googleService: GoogleService,
+  ) {}
 
   @Post('login')
   @IsPublic()
@@ -167,5 +173,20 @@ export class UsersController {
       data: body,
       userId,
     })
+  }
+
+  @Get('oauth/google')
+  @IsPublic()
+  @MessageResponse('Đăng nhập bằng Google thành công')
+  async googleLogin(@Query('code') code: string, @Res() res: Response) {
+    try {
+      const data = await this.googleService.googleCallback(code)
+      return res.redirect(
+        `${envConfig.CLIENT_REDIRECT_URI}?accessToken=${data.accessToken}&refreshToken=${data.refreshToken}&new_user=${data.new_user}`,
+      )
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
+      return res.redirect(`${envConfig.CLIENT_REDIRECT_URI}?errorMessage=${message}`)
+    }
   }
 }
