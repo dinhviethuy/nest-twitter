@@ -24,6 +24,8 @@ import { IsPublic } from '@/shared/decorators/auth.decorator'
 import envConfig from '@/shared/config'
 import { createReadStream, statSync } from 'fs'
 import fs from 'fs'
+import { encodeHLSWithMultipleVideoStreams } from '@/shared/utils/encodeVideo'
+import fsPromise from 'fs/promises'
 
 @Controller('medias')
 export class MediasController {
@@ -92,7 +94,7 @@ export class MediasController {
   @IsPublic() // Nếu cần xác thực thì bỏ dòng này đi
   @MessageResponse('Lấy video thành công')
   serveVideoFile(@Param('filename') filename: string, @Res() res: Response, @Headers() headers) {
-    const videoPath = path.resolve(UPLOAD_VIDEO_DIR, filename)
+    const videoPath = path.resolve(UPLOAD_VIDEO_DIR, filename, 'master.m3u8')
     // Kiểm tra file có tồn tại không
     if (!fs.existsSync(videoPath)) {
       const notFound = new NotFoundException('File not found')
@@ -152,11 +154,60 @@ export class MediasController {
       },
     }),
   )
-  uploadVideo(@UploadedFiles() files: Array<Express.Multer.File>) {
-    return files.map((file) => {
-      return {
-        url: `${envConfig.SERVER_URL}/medias/video/${file.filename}`,
-      }
-    })
+  async uploadVideo(@UploadedFiles() files: Array<Express.Multer.File>) {
+    try {
+      const result = await Promise.all(
+        files.map((file) => {
+          const directory = path.dirname(file.path) // Lấy đường dẫn thư mục chứa file video
+          const folderName = path.basename(directory) // Lấy tên thư mục chứa file video
+          // Trả URL về ngay lập tức
+          const fileUrl = `${envConfig.SERVER_URL}/medias/video/${folderName}/master.m3u8`
+
+          // Mã hóa video chạy ngầm
+          setImmediate(async () => {
+            try {
+              // Mã hóa video thành HLS
+              await encodeHLSWithMultipleVideoStreams(file.path)
+
+              // Xóa file gốc sau khi mã hóa xong
+              await fsPromise.unlink(file.path)
+            } catch (error) {
+              console.error('Error during video encoding:', error)
+            }
+          })
+
+          return { url: fileUrl }
+        }),
+      )
+
+      return result
+    } catch (error) {
+      console.error('Error uploading video:', error)
+      throw new Error('Video upload failed')
+    }
+  }
+
+  @Get('video/:filename/master.m3u8')
+  @IsPublic() // Nếu cần xác thực thì bỏ dòng này đi
+  @MessageResponse('Lấy video thành công')
+  serveVideoHLSFile(@Param('filename') filename: string, @Res() res: Response) {
+    const videoPath = path.resolve(UPLOAD_VIDEO_DIR, filename, 'master.m3u8')
+    if (!fs.existsSync(videoPath)) {
+      const notFound = new NotFoundException('File not found')
+      return res.status(notFound.getStatus()).send(notFound.getResponse())
+    }
+    res.sendFile(videoPath)
+  }
+
+  @Get('video/:filename/:v/:segment')
+  @IsPublic() // Nếu cần xác thực thì bỏ dòng này đi
+  @MessageResponse('Lấy video thành công')
+  serveTsHLSFile(@Param() param: any, @Res() res: Response) {
+    const file = path.resolve(UPLOAD_VIDEO_DIR, param.filename, param.v, param.segment)
+    if (!fs.existsSync(file)) {
+      const notFound = new NotFoundException('File not found')
+      return res.status(notFound.getStatus()).send(notFound.getResponse())
+    }
+    res.sendFile(file)
   }
 }
