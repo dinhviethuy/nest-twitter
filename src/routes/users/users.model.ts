@@ -88,6 +88,14 @@ export const UpdateMeProfileBodySchema = UserSchema.pick({
   website: true,
 })
   .strict()
+  .extend({
+    username: z
+      .string()
+      .regex(
+        /(^|[^@\w])@(\w{1,15})\b/g,
+        'username bắt đầu bằng @ và không có ký tự đặc biệt, có độ dài từ 1 đến 15 ký tự',
+      ),
+  })
   .partial()
 
 export const GetUserParamsSchema = z.object({
