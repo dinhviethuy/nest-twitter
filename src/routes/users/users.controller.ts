@@ -1,7 +1,7 @@
-import { Body, Controller, Post } from '@nestjs/common'
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common'
 import { UsersService } from './users.service'
 import { ZodSerializerDto } from 'nestjs-zod'
-import { UserResponseDTO, RegisterBodyDTO, LoginBodyDTO, RefreshTokenBodyDTO } from './users.dto'
+import { UserResponseDTO, RegisterBodyDTO, LoginBodyDTO, RefreshTokenBodyDTO, EmailVerifyTokenDTO } from './users.dto'
 import { MessageResponse } from '@/shared/decorators/message.decorator'
 import { IsPublic } from '@/shared/decorators/auth.decorator'
 import { ActiveUser } from '@/shared/decorators/active-user.decorator'
@@ -43,5 +43,13 @@ export class UsersController {
       data: body,
       userIdRequest: userId,
     })
+  }
+
+  @Post('verify-email')
+  @IsPublic()
+  @HttpCode(HttpStatus.OK)
+  @MessageResponse('Xác thực email thành công')
+  verifyEmail(@Body() body: EmailVerifyTokenDTO) {
+    return this.usersService.verifyEmail(body.emailVerifyToken)
   }
 }

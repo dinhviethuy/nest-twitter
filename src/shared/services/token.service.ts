@@ -7,6 +7,8 @@ import {
   AccessTokenPayload,
   RefreshTokenPayload,
   RefreshTokenPayloadCreate,
+  EmailVerifyTokenPayloadCreate,
+  EmailVerifyTokenPayload,
 } from '../types/jwt.types'
 
 @Injectable()
@@ -50,6 +52,26 @@ export class TokenService {
   verifyRefreshToken(token: string): Promise<RefreshTokenPayload> {
     return this.jwtService.verifyAsync(token, {
       secret: envConfig.REFRESH_TOKEN_SECRET,
+    })
+  }
+
+  signEmailVerifyToken(payload: EmailVerifyTokenPayloadCreate) {
+    return this.jwtService.sign(
+      {
+        ...payload,
+        uuid: uuid(),
+      },
+      {
+        secret: envConfig.EMAIL_VERIFY_TOKEN_SECRET,
+        expiresIn: envConfig.EMAIL_VERIFY_TOKEN_EXPIRES_IN,
+        algorithm: 'HS256',
+      },
+    )
+  }
+
+  verifyEmailVerifyToken(token: string): Promise<EmailVerifyTokenPayload> {
+    return this.jwtService.verifyAsync(token, {
+      secret: envConfig.EMAIL_VERIFY_TOKEN_SECRET,
     })
   }
 }

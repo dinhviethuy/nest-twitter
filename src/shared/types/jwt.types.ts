@@ -19,3 +19,13 @@ export interface RefreshTokenPayload extends RefreshTokenPayloadCreate {
   iat: number
   exp: number
 }
+
+export interface EmailVerifyTokenPayloadCreate {
+  userId: number
+  token_type: TokenTypeType
+}
+
+export interface EmailVerifyTokenPayload extends EmailVerifyTokenPayloadCreate {
+  iat: number
+  exp: number
+}

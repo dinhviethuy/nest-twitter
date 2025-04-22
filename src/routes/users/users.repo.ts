@@ -4,6 +4,7 @@ import { TokenService } from '../../shared/services/token.service'
 import { HashingService } from '../../shared/services/hashing.service'
 import { RegisterBodyType, UserResponseType } from './users.model'
 import { TokenType } from '@/shared/constants/token.constants'
+import { UserVerifyStatus } from '@/shared/constants/users.contants'
 
 @Injectable()
 export class UsersRepo {
@@ -41,10 +42,21 @@ export class UsersRepo {
         password: hashedPassword,
       },
     })
-    const [accessToken, refreshToken] = await Promise.all([
+    const [accessToken, refreshToken, emailVerifyToken] = await Promise.all([
       this.tokenService.signAccessToken({ userId: user.id, token_type: TokenType.AccessToken }),
       this.tokenService.signRefreshToken({ userId: user.id, token_type: TokenType.RefreshToken }),
+      this.tokenService.signEmailVerifyToken({
+        userId: user.id,
+        token_type: TokenType.EmailVerifyToken,
+      }),
     ])
+    await this.prismaService.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerifyToken,
+      },
+    })
+    console.log('emailVerifyToken: ', emailVerifyToken)
     const { exp } = await this.tokenService.verifyRefreshToken(refreshToken)
     await this.createRefreshToken({
       expiresAt: new Date(exp * 1000),
@@ -74,6 +86,16 @@ export class UsersRepo {
   createRefreshToken(data: { userId: number; token: string; expiresAt: Date }) {
     return this.prismaService.refreshToken.create({
       data,
+    })
+  }
+
+  async verifyEmail(user_id: number) {
+    return this.prismaService.user.update({
+      where: { id: user_id },
+      data: {
+        emailVerifyToken: '',
+        verify: UserVerifyStatus.Verified,
+      },
     })
   }
 }

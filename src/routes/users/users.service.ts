@@ -124,4 +124,28 @@ export class UsersService {
       throw new UnauthorizedException('Refresh token không hợp lệ')
     }
   }
+
+  async verifyEmail(emailVerifyToken: string) {
+    try {
+      const { token_type, userId } = await this.tokenService.verifyEmailVerifyToken(emailVerifyToken)
+      if (token_type !== TokenType.EmailVerifyToken) {
+        throw new UnauthorizedException('Xác thực email không hợp lệ')
+      }
+      const user = await this.sharedUserRepo.findUnique({ id: userId })
+      if (!user) {
+        throw new NotFoundException('Người dùng không tồn tại')
+      } else if (user.emailVerifyToken === '') {
+        throw new UnauthorizedException('Email đã được xác thực')
+      } else if (user.id !== userId || user.emailVerifyToken !== emailVerifyToken) {
+        throw new UnauthorizedException('Xác thực email không hợp lệ')
+      }
+      await this.usersRepo.verifyEmail(userId)
+      return true
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error
+      }
+      throw new UnauthorizedException('Xác thực email không hợp lệ')
+    }
+  }
 }

@@ -36,7 +36,14 @@ export const RefreshTokenBodySchema = z
   })
   .strict()
 
+export const EmailVerifyTokenSchema = z
+  .object({
+    emailVerifyToken: z.string(),
+  })
+  .strict()
+
 export type UserResponseType = z.infer<typeof UserResponseSchema>
 export type RegisterBodyType = z.infer<typeof RegisterBodySchema>
 export type LoginBodyType = z.infer<typeof LoginBodySchema>
 export type RefreshTokenBodyType = z.infer<typeof RefreshTokenBodySchema>
+export type EmailVerifyTokenType = z.infer<typeof EmailVerifyTokenSchema>
