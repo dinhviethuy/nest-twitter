@@ -7,7 +7,15 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common'
 import { UsersRepo } from './users.repo'
-import { LoginBodyType, RefreshTokenBodyType, RegisterBodyType } from './users.model'
+import {
+  GetUserParamsType,
+  LoginBodyType,
+  RefreshTokenBodyType,
+  RegisterBodyType,
+  ResetPasswordBodyType,
+  UpdateMeProfileBodyType,
+  VerifyForgotPasswordTokenBodyType,
+} from './users.model'
 import { isUniqueConstraintPrismaError } from '@/shared/utils/utils'
 import { SharedUserRepo } from '../../shared/repositories/shared-user.repo'
 import { HashingService } from '../../shared/services/hashing.service'
@@ -36,7 +44,6 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại')
     }
-    this.checkUserVerify(user.verify)
     return user
   }
 
@@ -180,5 +187,88 @@ export class UsersService {
       verify: user.verify,
     })
     return true
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.sharedUserRepo.findUnique({ email })
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại')
+    }
+    await this.usersRepo.forgotPassword({
+      userId: user.id,
+      verify: user.verify,
+    })
+    return true
+  }
+
+  async verifyForgotPassword(data: VerifyForgotPasswordTokenBodyType) {
+    try {
+      const { token_type, userId } = await this.tokenService.verifyForgotPasswordToken(data.forgotPasswordToken)
+      if (token_type !== TokenType.ForgotPasswordToken) {
+        throw new UnauthorizedException('Xác thực email không hợp lệ')
+      }
+      const user = await this.sharedUserRepo.findUnique({ id: userId })
+      if (!user) {
+        throw new NotFoundException('Người dùng không tồn tại')
+      } else if (user.id !== userId || user.forgotPasswordToken !== data.forgotPasswordToken) {
+        throw new UnauthorizedException('Xác thực email không hợp lệ')
+      }
+      return true
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error
+      }
+      throw new UnauthorizedException('Xác thực email không hợp lệ')
+    }
+  }
+
+  async resetPassword(data: ResetPasswordBodyType) {
+    try {
+      const { token_type, userId } = await this.tokenService.verifyForgotPasswordToken(data.forgotPasswordToken)
+      if (token_type !== TokenType.ForgotPasswordToken) {
+        throw new UnauthorizedException('Xác thực email không hợp lệ')
+      }
+      const user = await this.sharedUserRepo.findUnique({ id: userId })
+      if (!user) {
+        throw new NotFoundException('Người dùng không tồn tại')
+      } else if (user.id !== userId || user.forgotPasswordToken !== data.forgotPasswordToken) {
+        throw new UnauthorizedException('Xác thực email không hợp lệ')
+      }
+      await this.usersRepo.resetPassword({ data, userId })
+      return true
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error
+      }
+      throw new UnauthorizedException('Xác thực email không hợp lệ')
+    }
+  }
+
+  async updateMeProfile({ userId, data }: { userId: number; data: UpdateMeProfileBodyType }) {
+    try {
+      const user = await this.sharedUserRepo.findUnique({ id: userId })
+      if (!user) {
+        throw new NotFoundException('Người dùng không tồn tại')
+      }
+      this.checkUserVerify(user.verify)
+      const userUpdate = await this.usersRepo.updateMeProfile({ userId, data })
+      return userUpdate
+    } catch (error) {
+      if (isUniqueConstraintPrismaError(error)) {
+        throw new ConflictException('Tên người dùng đã tồn tại')
+      }
+      if (error instanceof HttpException) {
+        throw error
+      }
+      throw new UnprocessableEntityException('Cập nhật thông tin không thành công')
+    }
+  }
+
+  async getProfile(data: GetUserParamsType) {
+    const user = await this.sharedUserRepo.findUnique({ username: data.username })
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại')
+    }
+    return user
   }
 }

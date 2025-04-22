@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../shared/services/prisma.service'
 import { TokenService } from '../../shared/services/token.service'
 import { HashingService } from '../../shared/services/hashing.service'
-import { RegisterBodyType, UserResponseType } from './users.model'
+import { RegisterBodyType, ResetPasswordBodyType, UpdateMeProfileBodyType, UserResponseType } from './users.model'
 import { TokenType } from '@/shared/constants/token.constants'
 import { UserVerifyStatus, UserVerifyStatusType } from '@/shared/constants/users.contants'
 
@@ -126,6 +126,39 @@ export class UsersRepo {
       data: {
         emailVerifyToken,
       },
+    })
+  }
+
+  async forgotPassword({ userId, verify }: { userId: number; verify: UserVerifyStatusType }) {
+    const forgotPasswordToken = this.tokenService.signForgotPasswordToken({
+      userId,
+      token_type: TokenType.ForgotPasswordToken,
+      verify,
+    })
+    console.log('forgotPasswordToken: ', forgotPasswordToken)
+    return this.prismaService.user.update({
+      where: { id: userId },
+      data: {
+        forgotPasswordToken,
+      },
+    })
+  }
+
+  async resetPassword({ data, userId }: { data: ResetPasswordBodyType; userId: number }) {
+    const hashedPassword = await this.hashingService.hash(data.password)
+    return this.prismaService.user.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
+        forgotPasswordToken: '',
+      },
+    })
+  }
+
+  async updateMeProfile({ userId, data }: { userId: number; data: UpdateMeProfileBodyType }) {
+    return this.prismaService.user.update({
+      where: { id: userId },
+      data,
     })
   }
 }

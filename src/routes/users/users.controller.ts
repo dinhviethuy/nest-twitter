@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common'
 import { UsersService } from './users.service'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
@@ -8,6 +8,12 @@ import {
   RefreshTokenBodyDTO,
   EmailVerifyTokenDTO,
   GetUserResponseDTO,
+  ForgotPasswordBodyDTO,
+  VerifyForgotPasswordTokenBodyDTO,
+  ResetPasswordBodyDTO,
+  UpdateMeProfileBodyDTO,
+  GetUserParamResponseDTO,
+  GetUserParamsDTO,
 } from './users.dto'
 import { MessageResponse } from '@/shared/decorators/message.decorator'
 import { IsPublic } from '@/shared/decorators/auth.decorator'
@@ -86,5 +92,47 @@ export class UsersController {
   @MessageResponse('Lấy thông tin người dùng thành công')
   getMe(@ActiveUser('userId') userId: number) {
     return this.usersService.getMe(userId)
+  }
+
+  @Post('forgot-password')
+  @IsPublic()
+  @HttpCode(HttpStatus.OK)
+  @MessageResponse('Gửi email khôi phục mật khẩu thành công')
+  forgotPassword(@Body() body: ForgotPasswordBodyDTO) {
+    return this.usersService.forgotPassword(body.email)
+  }
+
+  @Post('verify-forgot-password')
+  @IsPublic()
+  @HttpCode(HttpStatus.OK)
+  @MessageResponse('Xác thực khôi phục mật khẩu thành công')
+  verifyForgotPassword(@Body() body: VerifyForgotPasswordTokenBodyDTO) {
+    return this.usersService.verifyForgotPassword(body)
+  }
+
+  @Post('reset-password')
+  @IsPublic()
+  @HttpCode(HttpStatus.OK)
+  @MessageResponse('Đặt lại mật khẩu thành công')
+  resetPassword(@Body() body: ResetPasswordBodyDTO) {
+    return this.usersService.resetPassword(body)
+  }
+
+  @Post('me')
+  @ZodSerializerDto(GetUserResponseDTO)
+  @MessageResponse('Cập nhật thông tin người dùng thành công')
+  async updateMeProfile(@Body() body: UpdateMeProfileBodyDTO, @ActiveUser('userId') userId: number) {
+    return this.usersService.updateMeProfile({
+      data: body,
+      userId,
+    })
+  }
+
+  @Get(':username')
+  @IsPublic()
+  @ZodSerializerDto(GetUserParamResponseDTO)
+  @MessageResponse('Lấy thông tin người dùng thành công')
+  getProfile(@Param() param: GetUserParamsDTO) {
+    return this.usersService.getProfile(param)
   }
 }

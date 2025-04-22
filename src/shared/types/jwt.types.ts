@@ -33,3 +33,14 @@ export interface EmailVerifyTokenPayload extends EmailVerifyTokenPayloadCreate {
   iat: number
   exp: number
 }
+
+export interface ForgotPasswordTokenPayloadCreate {
+  userId: number
+  token_type: TokenTypeType
+  verify: UserVerifyStatusType
+}
+
+export interface ForgotPasswordTokenPayload extends ForgotPasswordTokenPayloadCreate {
+  iat: number
+  exp: number
+}

@@ -9,6 +9,8 @@ import {
   RefreshTokenPayloadCreate,
   EmailVerifyTokenPayloadCreate,
   EmailVerifyTokenPayload,
+  ForgotPasswordTokenPayloadCreate,
+  ForgotPasswordTokenPayload,
 } from '../types/jwt.types'
 
 @Injectable()
@@ -72,6 +74,26 @@ export class TokenService {
   verifyEmailVerifyToken(token: string): Promise<EmailVerifyTokenPayload> {
     return this.jwtService.verifyAsync(token, {
       secret: envConfig.EMAIL_VERIFY_TOKEN_SECRET,
+    })
+  }
+
+  signForgotPasswordToken(payload: ForgotPasswordTokenPayloadCreate) {
+    return this.jwtService.sign(
+      {
+        ...payload,
+        uuid: uuid(),
+      },
+      {
+        secret: envConfig.FORGOT_PASSWORD_TOKEN_SECRET,
+        expiresIn: envConfig.FORGOT_PASSWORD_TOKEN_EXPIRES_IN,
+        algorithm: 'HS256',
+      },
+    )
+  }
+
+  verifyForgotPasswordToken(token: string): Promise<ForgotPasswordTokenPayload> {
+    return this.jwtService.verifyAsync(token, {
+      secret: envConfig.FORGOT_PASSWORD_TOKEN_SECRET,
     })
   }
 }

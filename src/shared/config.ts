@@ -23,6 +23,8 @@ const configSchema = z.object({
   REFRESH_TOKEN_EXPIRES_IN: z.string(),
   EMAIL_VERIFY_TOKEN_SECRET: z.string(),
   EMAIL_VERIFY_TOKEN_EXPIRES_IN: z.string(),
+  FORGOT_PASSWORD_TOKEN_SECRET: z.string(),
+  FORGOT_PASSWORD_TOKEN_EXPIRES_IN: z.string(),
 })
 
 const configServer = configSchema.safeParse(process.env)
