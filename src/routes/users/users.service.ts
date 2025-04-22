@@ -13,6 +13,7 @@ import { SharedUserRepo } from '../../shared/repositories/shared-user.repo'
 import { HashingService } from '../../shared/services/hashing.service'
 import { TokenService } from '@/shared/services/token.service'
 import { TokenType } from '@/shared/constants/token.constants'
+import { UserVerifyStatus } from '@/shared/constants/users.contants'
 
 @Injectable()
 export class UsersService {
@@ -135,7 +136,7 @@ export class UsersService {
       if (!user) {
         throw new NotFoundException('Người dùng không tồn tại')
       } else if (user.emailVerifyToken === '') {
-        throw new UnauthorizedException('Email đã được xác thực')
+        return UserVerifyStatus.Verified
       } else if (user.id !== userId || user.emailVerifyToken !== emailVerifyToken) {
         throw new UnauthorizedException('Xác thực email không hợp lệ')
       }
@@ -147,5 +148,16 @@ export class UsersService {
       }
       throw new UnauthorizedException('Xác thực email không hợp lệ')
     }
+  }
+
+  async resendVerifyEmail(userId: number) {
+    const user = await this.sharedUserRepo.findUnique({ id: userId })
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại')
+    } else if (user.emailVerifyToken === '') {
+      return UserVerifyStatus.Verified
+    }
+    await this.usersRepo.resendVerifyEmail(userId)
+    return true
   }
 }

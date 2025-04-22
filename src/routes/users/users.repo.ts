@@ -98,4 +98,18 @@ export class UsersRepo {
       },
     })
   }
+
+  async resendVerifyEmail(userId: number) {
+    const emailVerifyToken = this.tokenService.signEmailVerifyToken({
+      userId,
+      token_type: TokenType.EmailVerifyToken,
+    })
+    console.log('Resend emailVerifyToken: ', emailVerifyToken)
+    return this.prismaService.user.update({
+      where: { id: userId },
+      data: {
+        emailVerifyToken,
+      },
+    })
+  }
 }

@@ -17,10 +17,15 @@ export class CustomZodSerializerInterceptor extends ZodSerializerInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const responseSchema = this.getContextResponseSchema(context)
     const statusCode = context.switchToHttp().getResponse().statusCode
-    const message = (this.reflector as Reflector).get<string | undefined>(MessageKey, context.getHandler()) ?? ''
+    const defaultMessage = (this.reflector as Reflector).get<string | undefined>(MessageKey, context.getHandler()) ?? ''
 
     return next.handle().pipe(
       map((res) => {
+        let message = defaultMessage
+        if (res?.__customMessage) {
+          message = res.__customMessage
+          delete res.__customMessage // Clean up before returning
+        }
         if (!responseSchema || typeof res !== 'object' || res instanceof StreamableFile) {
           return {
             data: res,

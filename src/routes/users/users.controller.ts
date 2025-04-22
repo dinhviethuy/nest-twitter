@@ -5,6 +5,8 @@ import { UserResponseDTO, RegisterBodyDTO, LoginBodyDTO, RefreshTokenBodyDTO, Em
 import { MessageResponse } from '@/shared/decorators/message.decorator'
 import { IsPublic } from '@/shared/decorators/auth.decorator'
 import { ActiveUser } from '@/shared/decorators/active-user.decorator'
+import { EmptyBodyDTO } from '@/shared/dtos/request.dto'
+import { UserVerifyStatus } from '@prisma/client'
 
 @Controller('users')
 export class UsersController {
@@ -49,7 +51,26 @@ export class UsersController {
   @IsPublic()
   @HttpCode(HttpStatus.OK)
   @MessageResponse('Xác thực email thành công')
-  verifyEmail(@Body() body: EmailVerifyTokenDTO) {
-    return this.usersService.verifyEmail(body.emailVerifyToken)
+  async verifyEmail(@Body() body: EmailVerifyTokenDTO) {
+    const result = await this.usersService.verifyEmail(body.emailVerifyToken)
+    if (result === UserVerifyStatus.VERIFIED) {
+      return {
+        __customMessage: 'Email đã được xác thực. Không cần xác thực lại.',
+      }
+    }
+    return result
+  }
+
+  @Post('resend-verify-email')
+  @HttpCode(HttpStatus.OK)
+  @MessageResponse('Gửi lại email xác thực thành công')
+  async resendVerifyEmail(@Body() _: EmptyBodyDTO, @ActiveUser('userId') userId: number) {
+    const result = await this.usersService.resendVerifyEmail(userId)
+    if (result === UserVerifyStatus.VERIFIED) {
+      return {
+        __customMessage: 'Email đã được xác thực. Không cần gửi lại.',
+      }
+    }
+    return result
   }
 }
