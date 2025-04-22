@@ -23,6 +23,7 @@ import { UPLOAD_IMAGE_DIR, UPLOAD_VIDEO_DIR } from '@/shared/constants/orther.co
 import { IsPublic } from '@/shared/decorators/auth.decorator'
 import envConfig from '@/shared/config'
 import { createReadStream, statSync } from 'fs'
+import fs from 'fs'
 
 @Controller('medias')
 export class MediasController {
@@ -89,10 +90,18 @@ export class MediasController {
 
   @Get('video/:filename')
   @IsPublic() // Nếu cần xác thực thì bỏ dòng này đi
-  @Header('Accept-Ranges', 'bytes')
-  @Header('Content-Type', 'video/mp4')
+  @MessageResponse('Lấy video thành công')
   serveVideoFile(@Param('filename') filename: string, @Res() res: Response, @Headers() headers) {
     const videoPath = path.resolve(UPLOAD_VIDEO_DIR, filename)
+    // Kiểm tra file có tồn tại không
+    if (!fs.existsSync(videoPath)) {
+      const notFound = new NotFoundException('File not found')
+      return res.status(notFound.getStatus()).send(notFound.getResponse())
+    }
+    // set header cho response
+    // Trả về video theo định dạng mp4
+    res.setHeader('Accept-Ranges', 'bytes')
+    res.setHeader('Content-Type', 'video/mp4')
     const { size } = statSync(videoPath)
     // Lấy thông tin range từ headers
     const videoRange = headers.range
