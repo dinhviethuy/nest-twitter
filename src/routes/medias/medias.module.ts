@@ -8,6 +8,7 @@ import { MediasController } from './medias.controller'
 import { MediasService } from './medias.service'
 import { v4 as uuid } from 'uuid'
 import fs from 'fs'
+import { QueueService } from './queue.service'
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -41,6 +42,6 @@ const storage = multer.diskStorage({
     }),
   ],
   controllers: [MediasController],
-  providers: [MediasService],
+  providers: [MediasService, QueueService],
 })
 export class MediasModule {}

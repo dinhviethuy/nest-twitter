@@ -140,6 +140,16 @@ model Media {
   @@index(type)
 }
 
+model VideoStatusEncode {
+  id Int @id @default(autoincrement())
+  name String @unique @db.VarChar(255)
+  status VideoStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index(id)
+  @@index(name)
+}
 
 enum UserVerifyStatus {
   UNVERIFIED  
@@ -164,3 +174,9 @@ enum MediaType {
   VIDEO
 }
 
+enum VideoStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}

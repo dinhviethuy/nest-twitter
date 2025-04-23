@@ -19,17 +19,96 @@ import { MessageResponse } from '@/shared/decorators/message.decorator'
 import { CustomParseFilePipe } from '@/shared/pipes/custom-parse-file.pipe'
 import { Response } from 'express'
 import path from 'path'
-import { UPLOAD_IMAGE_DIR, UPLOAD_VIDEO_DIR } from '@/shared/constants/orther.constants'
+import { EncodingStatus, UPLOAD_IMAGE_DIR, UPLOAD_VIDEO_DIR } from '@/shared/constants/orther.constants'
 import { IsPublic } from '@/shared/decorators/auth.decorator'
 import envConfig from '@/shared/config'
 import { createReadStream, statSync } from 'fs'
 import fs from 'fs'
 import { encodeHLSWithMultipleVideoStreams } from '@/shared/utils/encodeVideo'
 import fsPromise from 'fs/promises'
+import { PrismaService } from '@/shared/services/prisma.service'
+import { GetVideoStatusEncodeDTO } from './medias.dto'
+import { QueueService } from './queue.service'
+
+// const prisma = new PrismaService()
+
+// class Queue {
+//   items: string[]
+//   encoding: boolean
+//   name: string[]
+//   constructor() {
+//     this.items = []
+//     this.encoding = false
+//     this.name = []
+//   }
+
+//   async enqueue(item: string, name: string) {
+//     this.items.push(item)
+//     this.name.push(name)
+//     await prisma.videoStatusEncode.create({
+//       data: {
+//         name,
+//         status: EncodingStatus.PENDING,
+//       },
+//     })
+//     await this.processEnCode()
+//   }
+//   processEnCode = async () => {
+//     if (this.encoding) return
+//     this.encoding = true
+//     while (this.items.length > 0) {
+//       const item = this.items[0]
+//       try {
+//         await prisma.videoStatusEncode.update({
+//           where: {
+//             name: item,
+//           },
+//           data: {
+//             status: EncodingStatus.PROCESSING,
+//           },
+//         })
+//         await encodeHLSWithMultipleVideoStreams(item)
+//         this.items.shift()
+//         await prisma.videoStatusEncode.update({
+//           where: {
+//             name: item,
+//           },
+//           data: {
+//             status: EncodingStatus.COMPLETED,
+//           },
+//         })
+//         await fsPromise.unlink(item)
+//         this.name.shift()
+//         console.log('Done encode', item)
+//       } catch (e) {
+//         await prisma.videoStatusEncode
+//           .update({
+//             where: {
+//               name: item,
+//             },
+//             data: {
+//               status: EncodingStatus.FAILED,
+//             },
+//           })
+//           .catch((e) => {
+//             throw e
+//           })
+//         throw e
+//       }
+//     }
+//     this.encoding = false
+//     console.log('Done all')
+//   }
+// }
+
+// const queue = new Queue()
 
 @Controller('medias')
 export class MediasController {
-  constructor(private readonly mediasService: MediasService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly queueService: QueueService,
+  ) {}
 
   @Post('upload-image')
   @MessageResponse('Upload ảnh thành công')
@@ -155,6 +234,9 @@ export class MediasController {
     }),
   )
   async uploadVideo(@UploadedFiles() files: Array<Express.Multer.File>) {
+    if (!files || files.length === 0) {
+      throw new NotFoundException('File not found')
+    }
     try {
       const result = await Promise.all(
         files.map((file) => {
@@ -164,13 +246,14 @@ export class MediasController {
           const fileUrl = `${envConfig.SERVER_URL}/medias/video/${folderName}/master.m3u8`
 
           // Mã hóa video chạy ngầm
-          setImmediate(async () => {
+          setImmediate(() => {
             try {
               // Mã hóa video thành HLS
-              await encodeHLSWithMultipleVideoStreams(file.path)
+              // await encodeHLSWithMultipleVideoStreams(file.path)
 
               // Xóa file gốc sau khi mã hóa xong
-              await fsPromise.unlink(file.path)
+              // await fsPromise.unlink(file.path)
+              this.queueService.enqueue(file.path, folderName)
             } catch (error) {
               console.error('Error during video encoding:', error)
             }
@@ -209,5 +292,19 @@ export class MediasController {
       return res.status(notFound.getStatus()).send(notFound.getResponse())
     }
     res.sendFile(file)
+  }
+
+  @Get('video-status/:name')
+  @MessageResponse('Lấy trạng thái video thành công')
+  async getVideoStatusEncode(@Param() param: GetVideoStatusEncodeDTO) {
+    const videoStatus = await this.prismaService.videoStatusEncode.findUnique({
+      where: {
+        name: param.name,
+      },
+    })
+    if (!videoStatus) {
+      throw new NotFoundException('Video not found')
+    }
+    return videoStatus
   }
 }
