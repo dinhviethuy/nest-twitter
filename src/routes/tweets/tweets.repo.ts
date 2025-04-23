@@ -89,6 +89,35 @@ export class TweetsRepo {
               audience: 'EVERYONE',
             }),
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+          },
+        },
+        hashtags: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        mentions: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+          },
+        },
+        medias: {
+          select: {
+            id: true,
+            type: true,
+            url: true,
+          },
+        },
+      },
     })
   }
 }

@@ -189,7 +189,7 @@ export class UsersRepo {
     })
     const { ids } = data
     const tweetCircleIds = tweetCircle?.tweet_circle.map((item) => item.id) || []
-    const newTweetCircleIds = ids.filter((id) => !tweetCircleIds.includes(id))
+    const newTweetCircleIds = ids.filter((id) => !tweetCircleIds.includes(id) && id !== userId)
     const deletedTweetCircleIds = tweetCircleIds.filter((id) => !ids.includes(id))
     return this.prismaService.user.update({
       where: { id: userId },

@@ -192,6 +192,7 @@ export class UsersController {
   }
 
   @Post('tweet-circle')
+  @ZodSerializerDto(GetUserResponseDTO)
   @MessageResponse('Thay đổi cài đặt Tweet Circle thành công')
   tweetCircle(@Body() body: CreateTweetCircleBodyDTO, @ActiveUser() user: AccessTokenPayload) {
     return this.usersService.tweetCircle({
