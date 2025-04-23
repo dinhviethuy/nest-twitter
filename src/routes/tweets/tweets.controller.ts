@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post } from '@nestjs/common'
 import { TweetsService } from './tweets.service'
-import { CreateTweetBodyDTO } from './tweets.dto'
+import { CreateTweetBodyDTO, GetTweetParamsDTO } from './tweets.dto'
 import { ActiveUser } from '@/shared/decorators/active-user.decorator'
 import { AccessTokenPayload } from '@/shared/types/jwt.types'
 import { SkipAuth } from '@/shared/decorators/auth.decorator'
@@ -16,7 +16,7 @@ export class TweetsController {
 
   @Get('/:tweetId')
   @SkipAuth()
-  getTweetById(@ActiveUser() user: AccessTokenPayload) {
-    return 'ok'
+  getTweetById(@Param() param: GetTweetParamsDTO, @ActiveUser() user: AccessTokenPayload | undefined) {
+    return this.tweetsService.getTweetById(param.tweetId, user)
   }
 }

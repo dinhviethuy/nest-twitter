@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../shared/services/prisma.service'
 import { CreateTweetBodyType } from './tweets.model'
+import { AccessTokenPayload } from '@/shared/types/jwt.types'
 
 @Injectable()
 export class TweetsRepo {
@@ -60,6 +61,33 @@ export class TweetsRepo {
             url: true,
           },
         },
+      },
+    })
+  }
+
+  getTweetById(tweet_id: number, user: AccessTokenPayload | undefined) {
+    return this.prismaService.tweet.findFirst({
+      where: {
+        id: tweet_id,
+        ...(user
+          ? {
+              OR: [
+                { audience: 'EVERYONE' },
+                {
+                  audience: 'TWITTER_CIRCLE',
+                  user: {
+                    tweet_circle: {
+                      some: {
+                        id: user.userId,
+                      },
+                    },
+                  },
+                },
+              ],
+            }
+          : {
+              audience: 'EVERYONE',
+            }),
       },
     })
   }

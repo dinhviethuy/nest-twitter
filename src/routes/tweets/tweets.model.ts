@@ -69,4 +69,11 @@ export const CreateTweetBodySchema = TweetShema.pick({
     }
   })
 
+export const GetTweetParamsSchema = z
+  .object({
+    tweetId: z.coerce.number().int().positive(),
+  })
+  .strict()
+
 export type CreateTweetBodyType = z.infer<typeof CreateTweetBodySchema>
+export type GetTweetParamsType = z.infer<typeof GetTweetParamsSchema>

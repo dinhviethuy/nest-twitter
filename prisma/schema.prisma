@@ -28,7 +28,6 @@ model User {
   tweet_circle User[] @relation("TweetCircle")
   inTweetCircle User[] @relation("TweetCircle")
 
-
   refreshTokens RefreshToken[] 
   followers Follower[] @relation("FollowerUser")
   following Follower[] @relation("UserFollower")
@@ -49,7 +48,7 @@ model RefreshToken {
   token String 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
 
   @@index(userId)
@@ -66,8 +65,8 @@ model Follower {
   userId Int
   followedUserId Int
   createdAt DateTime @default(now())
-  user User @relation("UserFollower", fields: [userId], references: [id])
-  follower User @relation("FollowerUser", fields: [followedUserId], references: [id])
+  user User @relation("UserFollower", fields: [userId], references: [id], onDelete: Cascade)
+  follower User @relation("FollowerUser", fields: [followedUserId], references: [id], onDelete: Cascade)
 
   @@index(userId)
   @@index(followedUserId)
@@ -80,8 +79,8 @@ model BookMark {
   userId Int
   tweetId Int
   createdAt DateTime @default(now())
-  user User @relation(fields: [userId], references: [id])
-  tweet Tweet @relation(fields: [tweetId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tweet Tweet @relation(fields: [tweetId], references: [id], onDelete: Cascade)
 
   @@unique([userId, tweetId])
   @@index([userId, tweetId])
@@ -94,8 +93,8 @@ model Like {
   tweetId Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user User @relation(fields: [userId], references: [id])
-  tweet Tweet @relation(fields: [tweetId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tweet Tweet @relation(fields: [tweetId], references: [id], onDelete: Cascade)
   @@unique([userId, tweetId])
   @@index([userId, tweetId])
   @@index(id)
@@ -112,7 +111,7 @@ model Tweet {
   content String @db.VarChar(255)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade) 
   likes Like[]
   bookmarks BookMark[]
   hashtags Hashtag[] 
@@ -141,7 +140,7 @@ model Media {
   url String @db.VarChar(255)
   type MediaType @default(IMAGE)
   tweetId Int
-  tweet Tweet @relation(fields: [tweetId], references: [id])
+  tweet Tweet @relation(fields: [tweetId], references: [id], onDelete: Cascade)
 
   @@index(id)
   @@index(type)

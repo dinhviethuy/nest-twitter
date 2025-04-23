@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { TweetsRepo } from './tweets.repo'
 import { CreateTweetBodyType } from './tweets.model'
 import { UserVerifyStatusType } from '@/shared/constants/users.contants'
 import { SharedUserRepo } from '@/shared/repositories/shared-user.repo'
 import { isForeignKeyConstraintPrismaError } from '@/shared/utils/utils'
+import { AccessTokenPayload } from '@/shared/types/jwt.types'
 
 @Injectable()
 export class TweetsService {
@@ -23,5 +24,13 @@ export class TweetsService {
       }
       throw error
     }
+  }
+
+  async getTweetById(tweetId: number, user: AccessTokenPayload | undefined) {
+    const tweet = await this.tweetsRepo.getTweetById(tweetId, user)
+    if (!tweet) {
+      throw new NotFoundException('Tweet không tồn tại, đã bị xóa hoặc không công khai')
+    }
+    return tweet
   }
 }
