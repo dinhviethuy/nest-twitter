@@ -75,5 +75,14 @@ export const GetTweetParamsSchema = z
   })
   .strict()
 
+export const GetTweetChildrenQuerySchema = z
+  .object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().default(10),
+    tweet_type: z.enum([TweetType.RETWEET, TweetType.COMMENT, TweetType.QUOTE_TWEET]),
+  })
+  .strict()
+
 export type CreateTweetBodyType = z.infer<typeof CreateTweetBodySchema>
 export type GetTweetParamsType = z.infer<typeof GetTweetParamsSchema>
+export type GetTweetChildrenQueryType = z.infer<typeof GetTweetChildrenQuerySchema>

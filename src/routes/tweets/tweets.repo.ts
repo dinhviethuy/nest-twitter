@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../shared/services/prisma.service'
-import { CreateTweetBodyType } from './tweets.model'
+import { CreateTweetBodyType, GetTweetChildrenQueryType } from './tweets.model'
 import { AccessTokenPayload } from '@/shared/types/jwt.types'
 import { TweetType } from '@/shared/constants/tweet.constants'
 
@@ -176,5 +176,88 @@ export class TweetsRepo {
       bookmarks,
       likes,
     }
+  }
+
+  async getTweetChildren({
+    data,
+    user,
+    tweetId,
+  }: {
+    data: GetTweetChildrenQueryType
+    user: AccessTokenPayload | undefined
+    tweetId: number
+  }) {
+    const skip = (data.page - 1) * data.limit
+    const take = data.limit
+    const tweet = await this.prismaService.tweet.findMany({
+      where: {
+        type: data.tweet_type,
+        parentId: tweetId,
+      },
+      skip,
+      take,
+    })
+    const res = await Promise.all([
+      ...tweet.map(async (tweet) => {
+        const [tweetUpdate, comments, quote_tweets, retweets, bookmarks, likes] = await Promise.all([
+          this.prismaService.tweet.update({
+            where: {
+              id: tweet.id,
+            },
+            data: {
+              ...(user
+                ? {
+                    user_view: {
+                      increment: 1,
+                    },
+                  }
+                : {
+                    guest_view: {
+                      increment: 1,
+                    },
+                  }),
+            },
+          }),
+          this.prismaService.tweet.count({
+            where: {
+              parentId: tweet.id,
+              type: TweetType.COMMENT,
+            },
+          }),
+          this.prismaService.tweet.count({
+            where: {
+              parentId: tweet.id,
+              type: TweetType.QUOTE_TWEET,
+            },
+          }),
+          this.prismaService.tweet.count({
+            where: {
+              parentId: tweet.id,
+              type: TweetType.RETWEET,
+            },
+          }),
+          this.prismaService.bookMark.count({
+            where: {
+              tweetId: tweet.id,
+            },
+          }),
+          this.prismaService.like.count({
+            where: {
+              tweetId: tweet.id,
+            },
+          }),
+        ])
+        return {
+          ...tweetUpdate,
+          comments,
+          views: tweetUpdate.guest_view + tweetUpdate.user_view,
+          quote_tweets,
+          retweets,
+          bookmarks,
+          likes,
+        }
+      }),
+    ])
+    return res
   }
 }
