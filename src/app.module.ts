@@ -9,9 +9,10 @@ import { HttpExceptionFilter } from './shared/filters/http-exception.filter'
 import { CustomZodSerializerInterceptor } from './shared/interceptors/custom-zod-serializer.interceptor'
 import { MediasModule } from './routes/medias/medias.module'
 import { TweetsModule } from './routes/tweets/tweets.module';
+import { BookmarksModule } from './routes/bookmarks/bookmarks.module';
 
 @Module({
-  imports: [SharedModule, UsersModule, MediasModule, TweetsModule],
+  imports: [SharedModule, UsersModule, MediasModule, TweetsModule, BookmarksModule],
   controllers: [AppController],
   providers: [
     AppService,
