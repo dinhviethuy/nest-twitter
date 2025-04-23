@@ -40,13 +40,6 @@ export class UsersService {
     private readonly tokenService: TokenService,
   ) {}
 
-  private checkUserVerify(verify: UserVerifyStatusType) {
-    if (verify === UserVerifyStatus.Unverified) {
-      throw new UnauthorizedException('Email chưa được xác thực')
-    }
-    return true
-  }
-
   async getMe(userId: number) {
     const user = await this.sharedUserRepo.findUnique({ id: userId })
     if (!user) {
@@ -258,7 +251,7 @@ export class UsersService {
       if (!user) {
         throw new NotFoundException('Người dùng không tồn tại')
       }
-      this.checkUserVerify(user.verify)
+      this.sharedUserRepo.checkUserVerify(user.verify)
       const userUpdate = await this.usersRepo.updateMeProfile({ userId, data })
       return userUpdate
     } catch (error) {
@@ -282,7 +275,7 @@ export class UsersService {
 
   async follow({ userId, data, verify }: { userId: number; data: UserFollwerBodyType; verify: UserVerifyStatusType }) {
     try {
-      this.checkUserVerify(verify)
+      this.sharedUserRepo.checkUserVerify(verify)
       if (userId === data.followedUserId) {
         throw new UnprocessableEntityException('Không thể theo dõi chính mình')
       }
@@ -312,7 +305,7 @@ export class UsersService {
     verify: UserVerifyStatusType
   }) {
     try {
-      this.checkUserVerify(verify)
+      this.sharedUserRepo.checkUserVerify(verify)
       if (userId === data.followedUserId) {
         throw new UnprocessableEntityException('Không thể bỏ theo dõi chính mình')
       }
@@ -334,7 +327,7 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại')
     }
-    this.checkUserVerify(user.verify)
+    this.sharedUserRepo.checkUserVerify(user.verify)
     const isPasswordValid = await this.hashingService.compare(data.oldPassword, user.password)
     if (!isPasswordValid) {
       throw new UnprocessableEntityException('Mật khẩu không chính xác')

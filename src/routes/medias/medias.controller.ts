@@ -11,102 +11,29 @@ import {
   UseInterceptors,
   Headers,
   HttpStatus,
-  Header,
 } from '@nestjs/common'
-import { MediasService } from './medias.service'
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express'
 import { MessageResponse } from '@/shared/decorators/message.decorator'
 import { CustomParseFilePipe } from '@/shared/pipes/custom-parse-file.pipe'
 import { Response } from 'express'
 import path from 'path'
-import { EncodingStatus, UPLOAD_IMAGE_DIR, UPLOAD_VIDEO_DIR } from '@/shared/constants/orther.constants'
+import { UPLOAD_IMAGE_DIR, UPLOAD_VIDEO_DIR } from '@/shared/constants/orther.constants'
 import { IsPublic } from '@/shared/decorators/auth.decorator'
 import envConfig from '@/shared/config'
 import { createReadStream, statSync } from 'fs'
 import fs from 'fs'
-import { encodeHLSWithMultipleVideoStreams } from '@/shared/utils/encodeVideo'
-import fsPromise from 'fs/promises'
 import { PrismaService } from '@/shared/services/prisma.service'
 import { GetVideoStatusEncodeDTO } from './medias.dto'
 import { QueueService } from './queue.service'
-
-// const prisma = new PrismaService()
-
-// class Queue {
-//   items: string[]
-//   encoding: boolean
-//   name: string[]
-//   constructor() {
-//     this.items = []
-//     this.encoding = false
-//     this.name = []
-//   }
-
-//   async enqueue(item: string, name: string) {
-//     this.items.push(item)
-//     this.name.push(name)
-//     await prisma.videoStatusEncode.create({
-//       data: {
-//         name,
-//         status: EncodingStatus.PENDING,
-//       },
-//     })
-//     await this.processEnCode()
-//   }
-//   processEnCode = async () => {
-//     if (this.encoding) return
-//     this.encoding = true
-//     while (this.items.length > 0) {
-//       const item = this.items[0]
-//       try {
-//         await prisma.videoStatusEncode.update({
-//           where: {
-//             name: item,
-//           },
-//           data: {
-//             status: EncodingStatus.PROCESSING,
-//           },
-//         })
-//         await encodeHLSWithMultipleVideoStreams(item)
-//         this.items.shift()
-//         await prisma.videoStatusEncode.update({
-//           where: {
-//             name: item,
-//           },
-//           data: {
-//             status: EncodingStatus.COMPLETED,
-//           },
-//         })
-//         await fsPromise.unlink(item)
-//         this.name.shift()
-//         console.log('Done encode', item)
-//       } catch (e) {
-//         await prisma.videoStatusEncode
-//           .update({
-//             where: {
-//               name: item,
-//             },
-//             data: {
-//               status: EncodingStatus.FAILED,
-//             },
-//           })
-//           .catch((e) => {
-//             throw e
-//           })
-//         throw e
-//       }
-//     }
-//     this.encoding = false
-//     console.log('Done all')
-//   }
-// }
-
-// const queue = new Queue()
+import { SharedUserRepo } from '@/shared/repositories/shared-user.repo'
+import { ActiveUser } from '@/shared/decorators/active-user.decorator'
+import { AccessTokenPayload } from '@/shared/types/jwt.types'
 
 @Controller('medias')
 export class MediasController {
   constructor(
     private readonly prismaService: PrismaService,
+    private readonly sharedUserRepo: SharedUserRepo,
     private readonly queueService: QueueService,
   ) {}
 
@@ -126,7 +53,9 @@ export class MediasController {
       }),
     )
     file: Express.Multer.File,
+    @ActiveUser() user: AccessTokenPayload,
   ) {
+    this.sharedUserRepo.checkUserVerify(user.verify)
     return {
       url: `${envConfig.SERVER_URL}/medias/static/${file.filename}`,
     }
@@ -148,7 +77,9 @@ export class MediasController {
       }),
     )
     files: Array<Express.Multer.File>,
+    @ActiveUser() user: AccessTokenPayload,
   ) {
+    this.sharedUserRepo.checkUserVerify(user.verify)
     return files.map((file) => {
       return {
         url: `${envConfig.SERVER_URL}/medias/static/${file.filename}`,
@@ -233,7 +164,8 @@ export class MediasController {
       },
     }),
   )
-  async uploadVideo(@UploadedFiles() files: Array<Express.Multer.File>) {
+  async uploadVideo(@UploadedFiles() files: Array<Express.Multer.File>, @ActiveUser() user: AccessTokenPayload) {
+    this.sharedUserRepo.checkUserVerify(user.verify)
     if (!files || files.length === 0) {
       throw new NotFoundException('File not found')
     }
@@ -296,7 +228,8 @@ export class MediasController {
 
   @Get('video-status/:name')
   @MessageResponse('Lấy trạng thái video thành công')
-  async getVideoStatusEncode(@Param() param: GetVideoStatusEncodeDTO) {
+  async getVideoStatusEncode(@Param() param: GetVideoStatusEncodeDTO, @ActiveUser() user: AccessTokenPayload) {
+    this.sharedUserRepo.checkUserVerify(user.verify)
     const videoStatus = await this.prismaService.videoStatusEncode.findUnique({
       where: {
         name: param.name,
