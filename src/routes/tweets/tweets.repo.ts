@@ -83,6 +83,9 @@ export class TweetsRepo {
                     },
                   },
                 },
+                {
+                  userId: user.userId,
+                },
               ],
             }
           : {
