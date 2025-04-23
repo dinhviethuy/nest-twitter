@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../shared/services/prisma.service'
 import { CreateTweetBodyType } from './tweets.model'
 import { AccessTokenPayload } from '@/shared/types/jwt.types'
+import { TweetType } from '@/shared/constants/tweet.constants'
 
 @Injectable()
 export class TweetsRepo {
@@ -65,8 +66,8 @@ export class TweetsRepo {
     })
   }
 
-  getTweetById(tweet_id: number, user: AccessTokenPayload | undefined) {
-    return this.prismaService.tweet.findFirst({
+  async getTweetById(tweet_id: number, user: AccessTokenPayload | undefined) {
+    const tweet = await this.prismaService.tweet.findFirst({
       where: {
         id: tweet_id,
         ...(user
@@ -122,5 +123,45 @@ export class TweetsRepo {
         },
       },
     })
+    if (!tweet) return null
+    const [comments, quote_tweets, retweets, bookmarks, likes] = await Promise.all([
+      this.prismaService.tweet.count({
+        where: {
+          parentId: tweet.id,
+          type: TweetType.COMMENT,
+        },
+      }),
+      this.prismaService.tweet.count({
+        where: {
+          parentId: tweet.id,
+          type: TweetType.QUOTE_TWEET,
+        },
+      }),
+      this.prismaService.tweet.count({
+        where: {
+          parentId: tweet.id,
+          type: TweetType.RETWEET,
+        },
+      }),
+      this.prismaService.bookMark.count({
+        where: {
+          tweetId: tweet.id,
+        },
+      }),
+      this.prismaService.like.count({
+        where: {
+          tweetId: tweet.id,
+        },
+      }),
+    ])
+    return {
+      ...tweet,
+      comments,
+      views: tweet.guest_view + tweet.user_view,
+      quote_tweets,
+      retweets,
+      bookmarks,
+      likes,
+    }
   }
 }
