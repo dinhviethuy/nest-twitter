@@ -1,12 +1,12 @@
 import { PrismaService } from '@/shared/services/prisma.service'
 import { Injectable } from '@nestjs/common'
-import { CreateBookmarkBodyType } from './bookmarks.model'
+import { CreateLikeBodyType } from './likes.model'
 
 @Injectable()
-export class BookmarkRepo {
+export class LikeRepo {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async createBookmark(data: CreateBookmarkBodyType, userId: number) {
+  async like(data: CreateLikeBodyType, userId: number) {
     return this.prismaService.tweet.update({
       where: {
         id: data.tweetId,
@@ -24,10 +24,9 @@ export class BookmarkRepo {
           },
           { userId },
         ],
-        type: 'TWEET',
       },
       data: {
-        bookmarks: {
+        likes: {
           create: {
             userId,
           },
@@ -36,8 +35,8 @@ export class BookmarkRepo {
     })
   }
 
-  async deleteBookmark(tweetId: number, userId: number) {
-    return this.prismaService.bookMark.delete({
+  async dislike(tweetId: number, userId: number) {
+    return this.prismaService.like.delete({
       where: {
         userId_tweetId: {
           tweetId,

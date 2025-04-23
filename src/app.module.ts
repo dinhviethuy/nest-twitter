@@ -10,9 +10,10 @@ import { CustomZodSerializerInterceptor } from './shared/interceptors/custom-zod
 import { MediasModule } from './routes/medias/medias.module'
 import { TweetsModule } from './routes/tweets/tweets.module';
 import { BookmarksModule } from './routes/bookmarks/bookmarks.module';
+import { LikesModule } from './routes/likes/likes.module';
 
 @Module({
-  imports: [SharedModule, UsersModule, MediasModule, TweetsModule, BookmarksModule],
+  imports: [SharedModule, UsersModule, MediasModule, TweetsModule, BookmarksModule, LikesModule],
   controllers: [AppController],
   providers: [
     AppService,

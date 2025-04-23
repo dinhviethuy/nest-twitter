@@ -1,41 +1,34 @@
 import { SharedUserRepo } from '@/shared/repositories/shared-user.repo'
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { UserVerifyStatusType } from '@/shared/constants/users.contants'
-import { CreateBookmarkBodyType, DeleteBookmarkParamsType } from './bookmarks.model'
-import { BookmarkRepo } from './bookmarks.repo'
 import {
   isForeignKeyConstraintPrismaError,
   isNotFoundPrismaError,
   isUniqueConstraintPrismaError,
 } from '@/shared/utils/utils'
+import { LikeRepo } from './likes.repo'
+import { CreateLikeBodyType, DeleteLikeParamsType } from './likes.model'
 
 @Injectable()
-export class BookmarksService {
+export class LikesService {
   constructor(
     private readonly sharedUserRepo: SharedUserRepo,
-    private readonly bookmarkRepo: BookmarkRepo,
+    private readonly likeRepo: LikeRepo,
   ) {}
 
-  async createBookmark({
-    data,
-    userId,
-    verify,
-  }: {
-    data: CreateBookmarkBodyType
-    userId: number
-    verify: UserVerifyStatusType
-  }) {
+  async like({ data, userId, verify }: { data: CreateLikeBodyType; userId: number; verify: UserVerifyStatusType }) {
     this.sharedUserRepo.checkUserVerify(verify)
     try {
-      await this.bookmarkRepo.createBookmark(data, userId)
+      await this.likeRepo.like(data, userId)
       return true
     } catch (error) {
       if (isUniqueConstraintPrismaError(error)) {
-        throw new ConflictException('Bookmark đã tồn tại')
+        throw new ConflictException('Tweet đã được like trước đó')
       }
       if (isNotFoundPrismaError(error)) {
         throw new NotFoundException('Tweet không tồn tại, đã bị xóa hoặc không công khai')
       }
+
       if (isForeignKeyConstraintPrismaError(error)) {
         throw new NotFoundException('Tweet không tồn tại')
       }
@@ -43,22 +36,22 @@ export class BookmarksService {
     }
   }
 
-  async deleteBookmark({
+  async dislike({
     data,
     userId,
     verify,
   }: {
-    data: DeleteBookmarkParamsType
+    data: DeleteLikeParamsType
     userId: number
     verify: UserVerifyStatusType
   }) {
     this.sharedUserRepo.checkUserVerify(verify)
     try {
-      await this.bookmarkRepo.deleteBookmark(data.tweetId, userId)
+      await this.likeRepo.dislike(data.tweetId, userId)
       return true
     } catch (error) {
       if (isNotFoundPrismaError(error)) {
-        throw new NotFoundException('Bookmark không tồn tại')
+        throw new NotFoundException('Like không tồn tại')
       }
       throw error
     }
