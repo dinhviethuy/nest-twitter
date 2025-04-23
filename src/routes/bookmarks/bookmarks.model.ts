@@ -13,4 +13,11 @@ export const CreateBookmarkBodySchema = z
   })
   .strict()
 
+export const DeleteBookmarkParamsSchema = z
+  .object({
+    tweetId: z.coerce.number(),
+  })
+  .strict()
+
 export type CreateBookmarkBodyType = z.infer<typeof CreateBookmarkBodySchema>
+export type DeleteBookmarkParamsType = z.infer<typeof DeleteBookmarkParamsSchema>

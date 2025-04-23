@@ -1,9 +1,13 @@
 import { SharedUserRepo } from '@/shared/repositories/shared-user.repo'
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { UserVerifyStatusType } from '@/shared/constants/users.contants'
-import { CreateBookmarkBodyType } from './bookmarks.model'
+import { CreateBookmarkBodyType, DeleteBookmarkParamsType } from './bookmarks.model'
 import { BookmarkRepo } from './bookmarks.repo'
-import { isForeignKeyConstraintPrismaError, isUniqueConstraintPrismaError } from '@/shared/utils/utils'
+import {
+  isForeignKeyConstraintPrismaError,
+  isNotFoundPrismaError,
+  isUniqueConstraintPrismaError,
+} from '@/shared/utils/utils'
 
 @Injectable()
 export class BookmarksService {
@@ -31,6 +35,27 @@ export class BookmarksService {
       }
       if (isForeignKeyConstraintPrismaError(error)) {
         throw new NotFoundException('Tweet không tồn tại')
+      }
+      throw error
+    }
+  }
+
+  async deleteBookmark({
+    data,
+    userId,
+    verify,
+  }: {
+    data: DeleteBookmarkParamsType
+    userId: number
+    verify: UserVerifyStatusType
+  }) {
+    this.sharedUserRepo.checkUserVerify(verify)
+    try {
+      await this.bookmarkRepo.deleteBookmark(data.tweetId, userId)
+      return true
+    } catch (error) {
+      if (isNotFoundPrismaError(error)) {
+        throw new NotFoundException('Bookmark không tồn tại')
       }
       throw error
     }
