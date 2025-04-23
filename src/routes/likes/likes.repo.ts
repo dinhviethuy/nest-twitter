@@ -24,6 +24,7 @@ export class LikeRepo {
           },
           { userId },
         ],
+        type: 'TWEET', // chỉ cho phép like tweet
       },
       data: {
         likes: {
