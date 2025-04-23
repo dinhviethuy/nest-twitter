@@ -1,10 +1,9 @@
-import { TweetType } from '@prisma/client'
-import { PrismaService } from '../src/shared/services/prisma.service'
 import { faker } from '@faker-js/faker'
 import { HashingService } from '@/shared/services/hashing.service'
 import { UserVerifyStatus } from '@/shared/constants/users.contants'
 import { Logger } from '@nestjs/common'
-import { TweetAudience } from '@/shared/constants/tweet.constants'
+import { TweetAudience, TweetType } from '@/shared/constants/tweet.constants'
+import { PrismaService } from '@/shared/services/prisma.service'
 
 const prisma = new PrismaService()
 const hashing = new HashingService()
