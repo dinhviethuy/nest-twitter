@@ -29,6 +29,7 @@ model User {
   refreshTokens RefreshToken[] 
   followers Follower[] @relation("FollowerUser")
   following Follower[] @relation("UserFollower")
+  mentionedIn Tweet[] @relation("TweetMentions")
   bookmarks BookMark[]
   likes Like[]
   tweets Tweet[]
@@ -101,7 +102,7 @@ model Like {
 model Tweet {
   id Int @id @default(autoincrement())
   userId Int
-  aduience TweetAudience @default(EVERYONE)
+  audience TweetAudience @default(EVERYONE)
   parentId Int?
   type TweetType @default(TWEET)
   guest_view Int @default(0)
@@ -113,11 +114,13 @@ model Tweet {
   likes Like[]
   bookmarks BookMark[]
   hashtags Hashtag[] 
+  medias Media[]
+  mentions User[] @relation("TweetMentions")
 
   @@index(id)
   @@index(userId)
   @@index(parentId)
-  @@index(aduience)
+  @@index(audience)
   @@index(type)
 }
 
@@ -135,6 +138,8 @@ model Media {
   id Int @id @default(autoincrement())
   url String @db.VarChar(255)
   type MediaType @default(IMAGE)
+  tweetId Int
+  tweet Tweet @relation(fields: [tweetId], references: [id])
 
   @@index(id)
   @@index(type)
