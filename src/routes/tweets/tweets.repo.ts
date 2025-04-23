@@ -67,7 +67,7 @@ export class TweetsRepo {
   }
 
   async getTweetById(tweet_id: number, user: AccessTokenPayload | undefined) {
-    const tweet = await this.prismaService.tweet.findFirst({
+    const tweet = await this.prismaService.tweet.update({
       where: {
         id: tweet_id,
         ...(user
@@ -91,6 +91,19 @@ export class TweetsRepo {
             }
           : {
               audience: 'EVERYONE',
+            }),
+      },
+      data: {
+        ...(user
+          ? {
+              user_view: {
+                increment: 1,
+              },
+            }
+          : {
+              guest_view: {
+                increment: 1,
+              },
             }),
       },
       include: {
