@@ -2,7 +2,7 @@ import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, HttpE
 import { Reflector } from '@nestjs/core'
 import { AccessTokenGuard } from './access-token.guard'
 import { AuthType, ConditionGuard } from '../constants/users.contants'
-import { AUTH_TYPE_KEY, AuthTypeDecoratorPayload } from '../decorators/auth.decorator'
+import { AUTH_TYPE_KEY, AuthTypeDecoratorPayload, SKIP_AUTH_KEY } from '../decorators/auth.decorator'
 
 @Injectable()
 export class AuthenticationGuard implements CanActivate {
@@ -18,6 +18,15 @@ export class AuthenticationGuard implements CanActivate {
     }
   }
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const skipValue = this.reflector.getAllAndOverride<boolean>(SKIP_AUTH_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ])
+    const req = context.switchToHttp().getRequest()
+    const accessToken = req.headers['authorization']?.split(' ')[1]
+    if (skipValue && (!accessToken || accessToken.split('.').length !== 3)) {
+      return true
+    }
     const authTypeValue = this.getAuthTypeValue(context)
     const guards = authTypeValue.authTypes.map((authType) => this.authTypeGuardMap[authType])
 

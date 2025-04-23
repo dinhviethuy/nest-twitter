@@ -4,6 +4,7 @@ import { TokenService } from '../../shared/services/token.service'
 import { HashingService } from '../../shared/services/hashing.service'
 import {
   ChangePasswordBodyType,
+  CreateTweetCircleBodyType,
   RegisterBodyType,
   ResetPasswordBodyType,
   UpdateMeProfileBodyType,
@@ -175,6 +176,28 @@ export class UsersRepo {
       where: { id: userId },
       data: {
         password: hashedPassword,
+      },
+    })
+  }
+
+  async tweetCircle({ userId, data }: { userId: number; data: CreateTweetCircleBodyType }) {
+    const tweetCircle = await this.prismaService.user.findUnique({
+      where: { id: userId },
+      select: {
+        tweet_circle: true,
+      },
+    })
+    const { ids } = data
+    const tweetCircleIds = tweetCircle?.tweet_circle.map((item) => item.id) || []
+    const newTweetCircleIds = ids.filter((id) => !tweetCircleIds.includes(id))
+    const deletedTweetCircleIds = tweetCircleIds.filter((id) => !ids.includes(id))
+    return this.prismaService.user.update({
+      where: { id: userId },
+      data: {
+        tweet_circle: {
+          connect: newTweetCircleIds.map((id) => ({ id })),
+          disconnect: deletedTweetCircleIds.map((id) => ({ id })),
+        },
       },
     })
   }

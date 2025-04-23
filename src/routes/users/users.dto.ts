@@ -16,6 +16,7 @@ import {
   UserUnfollowParamsSchema,
   ChangePasswordBodySchema,
   GetAuthorizationUrlResSchema,
+  CreateTweetCircleBodySchema,
 } from './users.model'
 
 export class RegisterBodyDTO extends createZodDto(RegisterBodySchema) {}
@@ -34,3 +35,4 @@ export class UserFollwerBodyDTO extends createZodDto(UserFollwerBodySchema) {}
 export class UserUnfollowParamsDTO extends createZodDto(UserUnfollowParamsSchema) {}
 export class ChangePasswordBodyDTO extends createZodDto(ChangePasswordBodySchema) {}
 export class GetAuthorizationUrlResDTO extends createZodDto(GetAuthorizationUrlResSchema) {}
+export class CreateTweetCircleBodyDTO extends createZodDto(CreateTweetCircleBodySchema) {}

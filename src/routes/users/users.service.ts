@@ -9,6 +9,7 @@ import {
 import { UsersRepo } from './users.repo'
 import {
   ChangePasswordBodyType,
+  CreateTweetCircleBodyType,
   GetUserParamsType,
   LoginBodyType,
   RefreshTokenBodyType,
@@ -337,5 +338,26 @@ export class UsersService {
     }
     await this.usersRepo.changePassword({ userId, data })
     return true
+  }
+
+  async tweetCircle({
+    data,
+    userId,
+    verify,
+  }: {
+    userId: number
+    data: CreateTweetCircleBodyType
+    verify: UserVerifyStatusType
+  }) {
+    this.sharedUserRepo.checkUserVerify(verify)
+    try {
+      const tweetCircle = await this.usersRepo.tweetCircle({ userId, data })
+      return tweetCircle
+    } catch (error) {
+      if (isNotFoundPrismaError(error)) {
+        throw new NotFoundException('Người dùng không tồn tại')
+      }
+      throw error
+    }
   }
 }

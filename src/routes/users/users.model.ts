@@ -77,6 +77,12 @@ export const ResetPasswordBodySchema = z
     }
   })
 
+export const CreateTweetCircleBodySchema = z
+  .object({
+    ids: z.array(z.number()),
+  })
+  .strict()
+
 export const GetAuthorizationUrlResSchema = z.object({
   url: z.string().url(),
 })
@@ -158,3 +164,4 @@ export type GetUserParamResponseType = z.infer<typeof GetUserParamResponseSchema
 export type UserFollwerBodyType = z.infer<typeof UserFollwerBodySchema>
 export type UserUnfollowParamsType = z.infer<typeof UserUnfollowParamsSchema>
 export type ChangePasswordBodyType = z.infer<typeof ChangePasswordBodySchema>
+export type CreateTweetCircleBodyType = z.infer<typeof CreateTweetCircleBodySchema>

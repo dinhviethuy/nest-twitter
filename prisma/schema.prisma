@@ -25,6 +25,9 @@ model User {
   username String @unique @default(dbgenerated("gen_random_uuid()"))
   avatar String @default("")
   coverPhoto String @default("")
+  tweet_circle User[] @relation("TweetCircle")
+  inTweetCircle User[] @relation("TweetCircle")
+
 
   refreshTokens RefreshToken[] 
   followers Follower[] @relation("FollowerUser")

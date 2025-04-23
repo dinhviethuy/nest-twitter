@@ -17,6 +17,7 @@ import {
   UserFollwerBodyDTO,
   UserUnfollowParamsDTO,
   ChangePasswordBodyDTO,
+  CreateTweetCircleBodyDTO,
 } from './users.dto'
 import { MessageResponse } from '@/shared/decorators/message.decorator'
 import { IsPublic } from '@/shared/decorators/auth.decorator'
@@ -188,5 +189,15 @@ export class UsersController {
       const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định'
       return res.redirect(`${envConfig.CLIENT_REDIRECT_URI}?errorMessage=${message}`)
     }
+  }
+
+  @Post('tweet-circle')
+  @MessageResponse('Thay đổi cài đặt Tweet Circle thành công')
+  tweetCircle(@Body() body: CreateTweetCircleBodyDTO, @ActiveUser() user: AccessTokenPayload) {
+    return this.usersService.tweetCircle({
+      data: body,
+      userId: user.userId,
+      verify: user.verify,
+    })
   }
 }
