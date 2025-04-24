@@ -12,6 +12,7 @@ import {
 } from './users.model'
 import { TokenType } from '@/shared/constants/token.constants'
 import { UserVerifyStatus, UserVerifyStatusType } from '@/shared/constants/users.contants'
+import { MailService } from '@/shared/services/mail.service'
 
 @Injectable()
 export class UsersRepo {
@@ -19,6 +20,7 @@ export class UsersRepo {
     private readonly prismaService: PrismaService,
     private readonly tokenService: TokenService,
     private readonly hashingService: HashingService,
+    private readonly mailService: MailService,
   ) {}
 
   async login(userId: number, verify: UserVerifyStatusType): Promise<UserResponseType> {
@@ -64,12 +66,16 @@ export class UsersRepo {
         emailVerifyToken,
       },
     })
-    console.log('emailVerifyToken: ', emailVerifyToken)
     const { exp } = await this.tokenService.verifyRefreshToken(refreshToken)
     await this.createRefreshToken({
       expiresAt: new Date(exp * 1000),
       token: refreshToken,
       userId: user.id,
+    })
+    await this.mailService.sendUserConfirmation({
+      email: data.email,
+      name: data.name,
+      token: emailVerifyToken,
     })
     return {
       accessToken,

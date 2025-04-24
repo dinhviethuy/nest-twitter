@@ -37,6 +37,9 @@ const configSchema = z.object({
   GOOGLE_REDIRECT_URI: z.string(),
   CLIENT_REDIRECT_URI: z.string(),
   SERVER_URL: z.string(),
+  MAIL_HOST: z.string(),
+  MAIL_ADDRESS: z.string(),
+  MAIL_PASSWORD: z.string(),
 })
 
 const configServer = configSchema.safeParse(process.env)

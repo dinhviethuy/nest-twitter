@@ -8,8 +8,10 @@ import { APP_GUARD } from '@nestjs/core'
 import { AuthenticationGuard } from './guards/authentication.guard'
 import { AccessTokenGuard } from './guards/access-token.guard'
 import { SharedFollwerRepo } from './repositories/shared-follwer.repo'
+import { MailerModuleConfig } from './Modules/mailer.module'
+import { MailService } from './services/mail.service'
 
-const sharedServices = [PrismaService, HashingService, TokenService, SharedUserRepo, SharedFollwerRepo]
+const sharedServices = [PrismaService, HashingService, TokenService, SharedUserRepo, SharedFollwerRepo, MailService]
 
 @Global()
 @Module({
@@ -22,6 +24,6 @@ const sharedServices = [PrismaService, HashingService, TokenService, SharedUserR
     },
   ],
   exports: sharedServices,
-  imports: [JwtModule],
+  imports: [JwtModule, MailerModuleConfig],
 })
 export class SharedModule {}
