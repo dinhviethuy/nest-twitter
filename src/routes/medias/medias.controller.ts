@@ -216,7 +216,9 @@ export class MediasController {
           throw new InternalServerErrorException('Error uploading file to S3', error)
         })
         .finally(async () => {
-          await fsPromise.unlink(file.path)
+          const directory = path.dirname(file.path)
+          const folderName = path.basename(directory)
+          await fsPromise.rm(path.resolve(UPLOAD_VIDEO_DIR, folderName), { recursive: true, force: true })
         })
       return {
         url: `${envConfig.SERVER_URL}/medias/video/${file.filename}`,
