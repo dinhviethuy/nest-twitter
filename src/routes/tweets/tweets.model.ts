@@ -83,6 +83,14 @@ export const GetTweetChildrenQuerySchema = z
   })
   .strict()
 
+export const PaginationQuerySchema = z
+  .object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().default(10),
+  })
+  .strict()
+
 export type CreateTweetBodyType = z.infer<typeof CreateTweetBodySchema>
 export type GetTweetParamsType = z.infer<typeof GetTweetParamsSchema>
 export type GetTweetChildrenQueryType = z.infer<typeof GetTweetChildrenQuerySchema>
+export type PaginationQueryType = z.infer<typeof PaginationQuerySchema>

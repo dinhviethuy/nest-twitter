@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../shared/services/prisma.service'
-import { CreateTweetBodyType, GetTweetChildrenQueryType } from './tweets.model'
+import { CreateTweetBodyType, GetTweetChildrenQueryType, PaginationQueryType } from './tweets.model'
 import { AccessTokenPayload } from '@/shared/types/jwt.types'
 import { TweetType } from '@/shared/constants/tweet.constants'
 
@@ -216,6 +216,126 @@ export class TweetsRepo {
                       increment: 1,
                     },
                   }),
+            },
+          }),
+          this.prismaService.tweet.count({
+            where: {
+              parentId: tweet.id,
+              type: TweetType.COMMENT,
+            },
+          }),
+          this.prismaService.tweet.count({
+            where: {
+              parentId: tweet.id,
+              type: TweetType.QUOTE_TWEET,
+            },
+          }),
+          this.prismaService.tweet.count({
+            where: {
+              parentId: tweet.id,
+              type: TweetType.RETWEET,
+            },
+          }),
+          this.prismaService.bookMark.count({
+            where: {
+              tweetId: tweet.id,
+            },
+          }),
+          this.prismaService.like.count({
+            where: {
+              tweetId: tweet.id,
+            },
+          }),
+        ])
+        return {
+          ...tweetUpdate,
+          comments,
+          views: tweetUpdate.guest_view + tweetUpdate.user_view,
+          quote_tweets,
+          retweets,
+          bookmarks,
+          likes,
+        }
+      }),
+    ])
+    return res
+  }
+
+  async getNewFeeds({ data, userId }: { userId: number; data: PaginationQueryType }) {
+    const skip = (data.page - 1) * data.limit
+    const take = data.limit
+    const tweets = await this.prismaService.tweet.findMany({
+      where: {
+        OR: [
+          {
+            // lấy tweet của mình
+            userId,
+          },
+          {
+            // lấy tweet của người dùng ở chế độ công khai
+            audience: 'EVERYONE',
+          },
+          {
+            // lấy tweet của người mà mình nằm tròn tweet_circle của họ
+            audience: 'TWITTER_CIRCLE',
+            user: {
+              tweet_circle: {
+                some: {
+                  id: userId,
+                },
+              },
+            },
+          },
+        ],
+      },
+      skip,
+      take,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+    console.log('tweets', tweets.length)
+    const res = await Promise.all([
+      ...tweets.map(async (tweet) => {
+        const [tweetUpdate, comments, quote_tweets, retweets, bookmarks, likes] = await Promise.all([
+          this.prismaService.tweet.update({
+            where: {
+              id: tweet.id,
+            },
+            data: {
+              user_view: {
+                increment: 1,
+              },
+            },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  avatar: true,
+                  username: true,
+                  name: true,
+                },
+              },
+              hashtags: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+              mentions: {
+                select: {
+                  id: true,
+                  username: true,
+                  name: true,
+                },
+              },
+              medias: {
+                select: {
+                  id: true,
+                  type: true,
+                  url: true,
+                },
+              },
             },
           }),
           this.prismaService.tweet.count({
