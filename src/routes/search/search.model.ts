@@ -12,6 +12,12 @@ export const SearchQuerySchema = z
         }
         return val
       }),
+    pepple_follow: z
+      .custom<boolean>((val) => {
+        if (typeof val === 'string' && val.toLowerCase() === 'true') return true
+        return false
+      })
+      .optional(),
     limit: z.number().default(10),
     page: z.number().default(1),
   })

@@ -20,6 +20,15 @@ export class SearchRepo {
               type: search.media_type,
             },
           },
+          ...(search.pepple_follow && {
+            user: {
+              followers: {
+                some: {
+                  userId,
+                },
+              },
+            },
+          }),
           OR: [
             {
               audience: 'EVERYONE',
@@ -50,6 +59,15 @@ export class SearchRepo {
               type: search.media_type,
             },
           },
+          ...(search.pepple_follow && {
+            user: {
+              followers: {
+                some: {
+                  userId,
+                },
+              },
+            },
+          }),
           OR: [
             {
               audience: 'EVERYONE',
