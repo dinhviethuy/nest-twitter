@@ -193,13 +193,51 @@ export class MediasController {
   @Post('upload-video')
   @MessageResponse('Upload video thành công')
   @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB
+      },
+    }),
+  )
+  async uploadVideo(@UploadedFile() file: Express.Multer.File, @ActiveUser() user: AccessTokenPayload) {
+    this.sharedUserRepo.checkUserVerify(user.verify)
+    if (!file) {
+      throw new NotFoundException('File not found')
+    }
+    try {
+      const result = await this.s3Service
+        .uploadFile({
+          contentType: file.mimetype,
+          filename: file.filename,
+          folder: 'videos',
+          filepath: file.path,
+        })
+        .catch((error) => {
+          throw new InternalServerErrorException('Error uploading file to S3', error)
+        })
+        .finally(async () => {
+          await fsPromise.unlink(file.path)
+        })
+      return {
+        url: `${envConfig.SERVER_URL}/medias/video/${file.filename}`,
+        urlS3: result.Location,
+      }
+    } catch (error) {
+      console.error('Error uploading video:', error)
+      throw new InternalServerErrorException('Video upload failed')
+    }
+  }
+
+  @Post('upload-video-hls')
+  @MessageResponse('Upload video thành công')
+  @UseInterceptors(
     FilesInterceptor('files', 1, {
       limits: {
         fileSize: 5 * 1024 * 1024, // 5MB
       },
     }),
   )
-  async uploadVideo(@UploadedFiles() files: Array<Express.Multer.File>, @ActiveUser() user: AccessTokenPayload) {
+  async uploadVideoHls(@UploadedFiles() files: Array<Express.Multer.File>, @ActiveUser() user: AccessTokenPayload) {
     this.sharedUserRepo.checkUserVerify(user.verify)
     if (!files || files.length === 0) {
       throw new NotFoundException('File not found')
