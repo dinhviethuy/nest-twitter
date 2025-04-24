@@ -41,6 +41,11 @@ const configSchema = z.object({
   MAIL_HOST: z.string(),
   MAIL_ADDRESS: z.string(),
   MAIL_PASSWORD: z.string(),
+  S3_ENDPOINT: z.string(),
+  S3_REGION: z.string(),
+  S3_ACCESS_KEY_ID: z.string(),
+  S3_SECRET_ACCESS_KEY: z.string(),
+  S3_BUCKET_NAME: z.string(),
 })
 
 const configServer = configSchema.safeParse(process.env)

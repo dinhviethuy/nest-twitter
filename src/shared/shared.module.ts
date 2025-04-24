@@ -10,8 +10,17 @@ import { AccessTokenGuard } from './guards/access-token.guard'
 import { SharedFollwerRepo } from './repositories/shared-follwer.repo'
 import { MailerModuleConfig } from './Modules/mailer.module'
 import { MailService } from './services/mail.service'
+import { S3Service } from './services/s3.service'
 
-const sharedServices = [PrismaService, HashingService, TokenService, SharedUserRepo, SharedFollwerRepo, MailService]
+const sharedServices = [
+  PrismaService,
+  HashingService,
+  TokenService,
+  SharedUserRepo,
+  SharedFollwerRepo,
+  MailService,
+  S3Service,
+]
 
 @Global()
 @Module({

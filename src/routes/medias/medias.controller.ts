@@ -11,6 +11,7 @@ import {
   UseInterceptors,
   Headers,
   HttpStatus,
+  InternalServerErrorException,
 } from '@nestjs/common'
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express'
 import { MessageResponse } from '@/shared/decorators/message.decorator'
@@ -28,6 +29,8 @@ import { QueueService } from './queue.service'
 import { SharedUserRepo } from '@/shared/repositories/shared-user.repo'
 import { ActiveUser } from '@/shared/decorators/active-user.decorator'
 import { AccessTokenPayload } from '@/shared/types/jwt.types'
+import { S3Service } from '@/shared/services/s3.service'
+import fsPromise from 'fs/promises'
 
 @Controller('medias')
 export class MediasController {
@@ -35,6 +38,7 @@ export class MediasController {
     private readonly prismaService: PrismaService,
     private readonly sharedUserRepo: SharedUserRepo,
     private readonly queueService: QueueService,
+    private readonly s3Service: S3Service,
   ) {}
 
   @Post('upload-image')
@@ -46,7 +50,7 @@ export class MediasController {
       },
     }),
   )
-  uploadImage(
+  async uploadImage(
     @UploadedFile(
       new CustomParseFilePipe({
         validators: [new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 })],
@@ -56,8 +60,22 @@ export class MediasController {
     @ActiveUser() user: AccessTokenPayload,
   ) {
     this.sharedUserRepo.checkUserVerify(user.verify)
+    const res = await this.s3Service
+      .uploadFile({
+        contentType: file.mimetype,
+        filename: file.filename,
+        folder: 'images',
+        filepath: file.path,
+      })
+      .catch((error) => {
+        throw new InternalServerErrorException('Error uploading file to S3', error)
+      })
+      .finally(async () => {
+        await fsPromise.unlink(file.path)
+      })
     return {
       url: `${envConfig.SERVER_URL}/medias/static/${file.filename}`,
+      urlS3: res.Location,
     }
   }
 
@@ -70,7 +88,7 @@ export class MediasController {
       },
     }),
   )
-  uploadImages(
+  async uploadImages(
     @UploadedFiles(
       new CustomParseFilePipe({
         validators: [new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 })],
@@ -80,11 +98,28 @@ export class MediasController {
     @ActiveUser() user: AccessTokenPayload,
   ) {
     this.sharedUserRepo.checkUserVerify(user.verify)
-    return files.map((file) => {
-      return {
-        url: `${envConfig.SERVER_URL}/medias/static/${file.filename}`,
-      }
-    })
+    const res = await Promise.all([
+      ...files.map(async (file) => {
+        const res = await this.s3Service
+          .uploadFile({
+            contentType: file.mimetype,
+            filename: file.filename,
+            folder: 'images',
+            filepath: file.path,
+          })
+          .catch((error) => {
+            throw new InternalServerErrorException('Error uploading file to S3', error)
+          })
+          .finally(async () => {
+            await fsPromise.unlink(file.path)
+          })
+        return {
+          url: `${envConfig.SERVER_URL}/medias/static/${file.filename}`,
+          urlS3: res.Location,
+        }
+      }),
+    ])
+    return res
   }
 
   @Get('static/:filename')
