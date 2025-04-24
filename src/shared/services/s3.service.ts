@@ -3,6 +3,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common'
 import envConfig from '../config'
 import { Upload } from '@aws-sdk/lib-storage'
 import { readFileSync } from 'fs'
+import { Response } from 'express'
 
 @Injectable()
 export class S3Service {
@@ -15,6 +16,7 @@ export class S3Service {
         accessKeyId: envConfig.S3_ACCESS_KEY_ID,
         secretAccessKey: envConfig.S3_SECRET_ACCESS_KEY,
       },
+      forcePathStyle: true,
     })
   }
 
@@ -24,7 +26,7 @@ export class S3Service {
     folder,
     filepath,
   }: {
-    folder: string
+    folder?: string
     filename: string
     contentType: string
     filepath: string
@@ -34,7 +36,7 @@ export class S3Service {
         client: this.s3,
         params: {
           Bucket: envConfig.S3_BUCKET_NAME,
-          Key: `${folder}/${filename}`,
+          Key: folder ? `${folder}/${filename}` : filename,
           Body: readFileSync(filepath),
           ContentType: contentType,
         },
@@ -48,6 +50,16 @@ export class S3Service {
       throw new InternalServerErrorException('Error uploading file to S3', error)
     }
   }
-}
 
-const s3 = new S3Service().s3
+  async getFileObject(key: string, res: Response) {
+    const data = await this.s3
+      .getObject({
+        Bucket: envConfig.S3_BUCKET_NAME,
+        Key: key,
+      })
+      .catch((error) => {
+        throw new InternalServerErrorException('Error getting file from S3', error)
+      })
+    return (data.Body as any).pipe(res)
+  }
+}

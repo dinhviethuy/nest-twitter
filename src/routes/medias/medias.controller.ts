@@ -281,24 +281,28 @@ export class MediasController {
   @IsPublic() // Nếu cần xác thực thì bỏ dòng này đi
   @MessageResponse('Lấy video thành công')
   serveVideoHLSFile(@Param('filename') filename: string, @Res() res: Response) {
-    const videoPath = path.resolve(UPLOAD_VIDEO_DIR, filename, 'master.m3u8')
-    if (!fs.existsSync(videoPath)) {
-      const notFound = new NotFoundException('File not found')
-      return res.status(notFound.getStatus()).send(notFound.getResponse())
-    }
-    res.sendFile(videoPath)
+    // const videoPath = path.resolve(UPLOAD_VIDEO_DIR, filename, 'master.m3u8')
+    // if (!fs.existsSync(videoPath)) {
+    //   const notFound = new NotFoundException('File not found')
+    //   return res.status(notFound.getStatus()).send(notFound.getResponse())
+    // }
+    // res.sendFile(videoPath)
+    // send file video từ s3
+    return this.s3Service.getFileObject(`video-hls/${filename}/master.m3u8`, res)
   }
 
   @Get('video/:filename/:v/:segment')
   @IsPublic() // Nếu cần xác thực thì bỏ dòng này đi
   @MessageResponse('Lấy video thành công')
   serveTsHLSFile(@Param() param: any, @Res() res: Response) {
-    const file = path.resolve(UPLOAD_VIDEO_DIR, param.filename, param.v, param.segment)
-    if (!fs.existsSync(file)) {
-      const notFound = new NotFoundException('File not found')
-      return res.status(notFound.getStatus()).send(notFound.getResponse())
-    }
-    res.sendFile(file)
+    // const file = path.resolve(UPLOAD_VIDEO_DIR, param.filename, param.v, param.segment)
+    // if (!fs.existsSync(file)) {
+    //   const notFound = new NotFoundException('File not found')
+    //   return res.status(notFound.getStatus()).send(notFound.getResponse())
+    // }
+    // res.sendFile(file)
+    // send file video từ s3
+    return this.s3Service.getFileObject(`video-hls/${param.filename}/${param.v}/${param.segment}`, res)
   }
 
   @Get('video-status/:name')
