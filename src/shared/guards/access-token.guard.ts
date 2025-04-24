@@ -33,7 +33,6 @@ export class AccessTokenGuard implements CanActivate {
       request[REQUEST_USER_KEY] = decodedAccessToken
       return decodedAccessToken
     } catch (error) {
-      console.log('Error verifying access token:', error)
       if (error instanceof HttpException) {
         throw error
       }

@@ -76,6 +76,9 @@ export class UsersRepo {
       email: data.email,
       name: data.name,
       token: emailVerifyToken,
+      subject: 'Welcome to Twitter App! Confirm your Email',
+      ButtonTitle: 'Verify Email',
+      path: 'verify-email',
     })
     return {
       accessToken,
@@ -133,13 +136,21 @@ export class UsersRepo {
       token_type: TokenType.EmailVerifyToken,
       verify,
     })
-    console.log('Resend emailVerifyToken: ', emailVerifyToken)
-    return this.prismaService.user.update({
+    const user = await this.prismaService.user.update({
       where: { id: userId },
       data: {
         emailVerifyToken,
       },
     })
+    await this.mailService.sendUserConfirmation({
+      email: user.email,
+      name: user.name,
+      token: emailVerifyToken,
+      subject: 'Resend Verify Email',
+      ButtonTitle: 'Verify Email',
+      path: 'verify-email',
+    })
+    return user
   }
 
   async forgotPassword({ userId, verify }: { userId: number; verify: UserVerifyStatusType }) {
@@ -148,13 +159,21 @@ export class UsersRepo {
       token_type: TokenType.ForgotPasswordToken,
       verify,
     })
-    console.log('forgotPasswordToken: ', forgotPasswordToken)
-    return this.prismaService.user.update({
+    const user = await this.prismaService.user.update({
       where: { id: userId },
       data: {
         forgotPasswordToken,
       },
     })
+    await this.mailService.sendUserConfirmation({
+      email: user.email,
+      name: user.name,
+      token: forgotPasswordToken,
+      subject: 'Reset Password',
+      ButtonTitle: 'Reset Password',
+      path: 'reset-password',
+    })
+    return user
   }
 
   async resetPassword({ data, userId }: { data: ResetPasswordBodyType; userId: number }) {

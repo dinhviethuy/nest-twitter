@@ -36,6 +36,7 @@ const configSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string(),
   GOOGLE_REDIRECT_URI: z.string(),
   CLIENT_REDIRECT_URI: z.string(),
+  CLIENT_URL: z.string(),
   SERVER_URL: z.string(),
   MAIL_HOST: z.string(),
   MAIL_ADDRESS: z.string(),

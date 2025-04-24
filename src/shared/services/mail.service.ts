@@ -1,21 +1,36 @@
 import { MailerService } from '@nestjs-modules/mailer'
 import { Injectable } from '@nestjs/common'
+import envConfig from '../config'
 
 @Injectable()
 export class MailService {
   constructor(private readonly mailerService: MailerService) {}
 
-  async sendUserConfirmation({ email, name, token }: { token: string; name: string; email: string }) {
-    const url = `example.com/auth/confirm?token=${token}`
+  async sendUserConfirmation({
+    email,
+    name,
+    token,
+    subject,
+    ButtonTitle,
+    path,
+  }: {
+    token: string
+    name: string
+    email: string
+    subject: string
+    ButtonTitle: string
+    path: string
+  }) {
+    const url = `${envConfig.CLIENT_URL}/${path}?token=${token}`
 
     await this.mailerService.sendMail({
       to: email,
-      // from: '"Support Team" <support@example.com>',
-      subject: 'Welcome to Nice App! Confirm your Email',
-      template: 'regiter',
+      subject,
+      template: 'verify-email',
       context: {
         name,
         url,
+        ButtonTitle,
       },
     })
   }
