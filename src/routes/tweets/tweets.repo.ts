@@ -264,37 +264,63 @@ export class TweetsRepo {
   async getNewFeeds({ data, userId }: { userId: number; data: PaginationQueryType }) {
     const skip = (data.page - 1) * data.limit
     const take = data.limit
-    const tweets = await this.prismaService.tweet.findMany({
-      where: {
-        OR: [
-          {
-            // lấy tweet của mình
-            userId,
-          },
-          {
-            // lấy tweet của người dùng ở chế độ công khai
-            audience: 'EVERYONE',
-          },
-          {
-            // lấy tweet của người mà mình nằm tròn tweet_circle của họ
-            audience: 'TWITTER_CIRCLE',
-            user: {
-              tweet_circle: {
-                some: {
-                  id: userId,
+    const [tweets, totals] = await Promise.all([
+      this.prismaService.tweet.findMany({
+        where: {
+          OR: [
+            {
+              // lấy tweet của mình
+              userId,
+            },
+            {
+              // lấy tweet của người dùng ở chế độ công khai
+              audience: 'EVERYONE',
+            },
+            {
+              // lấy tweet của người mà mình nằm tròn tweet_circle của họ
+              audience: 'TWITTER_CIRCLE',
+              user: {
+                tweet_circle: {
+                  some: {
+                    id: userId,
+                  },
                 },
               },
             },
-          },
-        ],
-      },
-      skip,
-      take,
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
-    console.log('tweets', tweets.length)
+          ],
+        },
+        skip,
+        take,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prismaService.tweet.count({
+        where: {
+          OR: [
+            {
+              // lấy tweet của mình
+              userId,
+            },
+            {
+              // lấy tweet của người dùng ở chế độ công khai
+              audience: 'EVERYONE',
+            },
+            {
+              // lấy tweet của người mà mình nằm tròn tweet_circle của họ
+              audience: 'TWITTER_CIRCLE',
+              user: {
+                tweet_circle: {
+                  some: {
+                    id: userId,
+                  },
+                },
+              },
+            },
+          ],
+        },
+      }),
+    ])
     const res = await Promise.all([
       ...tweets.map(async (tweet) => {
         const [tweetUpdate, comments, quote_tweets, retweets, bookmarks, likes] = await Promise.all([
@@ -378,6 +404,12 @@ export class TweetsRepo {
         }
       }),
     ])
-    return res
+    return {
+      ...res,
+      total: totals,
+      total_pages: Math.ceil(totals / data.limit),
+      page: data.page,
+      limit: data.limit,
+    }
   }
 }
