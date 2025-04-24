@@ -111,6 +111,14 @@ async function FollowUserAndCreateTwee(userId: number, ids: number[], lengthRand
                 id: mention,
               })),
             },
+            medias: {
+              create: [
+                {
+                  url: faker.image.url(),
+                  type: 'IMAGE',
+                },
+              ],
+            },
           },
         }),
         prisma.tweet.create({
@@ -129,6 +137,14 @@ async function FollowUserAndCreateTwee(userId: number, ids: number[], lengthRand
               connect: randomIds.map((mention) => ({
                 id: mention,
               })),
+            },
+            medias: {
+              create: [
+                {
+                  url: faker.image.url(),
+                  type: 'VIDEO',
+                },
+              ],
             },
           },
         }),

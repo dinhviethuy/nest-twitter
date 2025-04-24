@@ -11,9 +11,10 @@ import { MediasModule } from './routes/medias/medias.module'
 import { TweetsModule } from './routes/tweets/tweets.module';
 import { BookmarksModule } from './routes/bookmarks/bookmarks.module';
 import { LikesModule } from './routes/likes/likes.module';
+import { SearchModule } from './routes/search/search.module';
 
 @Module({
-  imports: [SharedModule, UsersModule, MediasModule, TweetsModule, BookmarksModule, LikesModule],
+  imports: [SharedModule, UsersModule, MediasModule, TweetsModule, BookmarksModule, LikesModule, SearchModule],
   controllers: [AppController],
   providers: [
     AppService,

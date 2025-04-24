@@ -123,6 +123,7 @@ model Tweet {
   @@index(parentId)
   @@index(audience)
   @@index(type)
+  @@index(content)
 }
 
 model Hashtag {

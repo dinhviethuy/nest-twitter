@@ -405,7 +405,7 @@ export class TweetsRepo {
       }),
     ])
     return {
-      ...res,
+      result: res,
       total: totals,
       total_pages: Math.ceil(totals / data.limit),
       page: data.page,
