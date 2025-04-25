@@ -12,7 +12,7 @@ export const SearchQuerySchema = z
         }
         return val
       }),
-    pepple_follow: z
+    people_follow: z
       .custom<boolean>((val) => {
         if (typeof val === 'string' && val.toLowerCase() === 'true') return true
         return false

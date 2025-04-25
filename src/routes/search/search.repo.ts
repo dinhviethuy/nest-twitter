@@ -20,7 +20,7 @@ export class SearchRepo {
               type: search.media_type,
             },
           },
-          ...(search.pepple_follow &&
+          ...(search.people_follow &&
             userId && {
               user: {
                 followers: {
@@ -60,7 +60,7 @@ export class SearchRepo {
               type: search.media_type,
             },
           },
-          ...(search.pepple_follow &&
+          ...(search.people_follow &&
             userId && {
               user: {
                 followers: {
